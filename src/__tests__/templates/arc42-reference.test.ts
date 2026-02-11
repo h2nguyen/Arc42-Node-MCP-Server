@@ -5,7 +5,9 @@ import {
   getArc42ReferenceString,
   getArc42ReferenceMarkdown,
   getArc42ReferenceConfig,
-  reloadArc42Reference
+  reloadArc42Reference,
+  parseVersionProperties,
+  getSubmoduleCommitSha
 } from '../../templates/arc42-reference.js';
 
 describe('arc42-reference', () => {
@@ -157,6 +159,89 @@ describe('arc42-reference', () => {
       expect(ref.date).toBe(ARC42_REFERENCE.date);
       expect(ref.sourceRepo).toBe(ARC42_REFERENCE.sourceRepo);
     });
+
+    it('should return a complete Arc42Reference with all required properties', () => {
+      const ref = reloadArc42Reference();
+      
+      // Check all properties exist and have valid types
+      expect(typeof ref.version).toBe('string');
+      expect(typeof ref.date).toBe('string');
+      expect(typeof ref.commitSha).toBe('string');
+      expect(typeof ref.sourceRepo).toBe('string');
+      expect(typeof ref.submoduleAvailable).toBe('boolean');
+      expect(Array.isArray(ref.notes)).toBe(true);
+      
+      // Check values are non-empty
+      expect(ref.version.length).toBeGreaterThan(0);
+      expect(ref.date.length).toBeGreaterThan(0);
+      expect(ref.commitSha.length).toBeGreaterThan(0);
+      expect(ref.sourceRepo.length).toBeGreaterThan(0);
+      expect(ref.notes.length).toBeGreaterThan(0);
+    });
+
+    it('should include correct notes depending on submodule availability', () => {
+      const ref = reloadArc42Reference();
+      
+      expect(ref.notes).toContain('Templates adapted from AsciiDoc to Markdown format');
+      expect(ref.notes).toContain('Section guidance text customized for AI-assisted documentation');
+      
+      if (!ref.submoduleAvailable) {
+        expect(ref.notes).toContain('Fallback values used - submodule not available');
+      } else {
+        expect(ref.notes).not.toContain('Fallback values used - submodule not available');
+      }
+    });
+
+    it('should be callable multiple times with consistent results', () => {
+      const ref1 = reloadArc42Reference();
+      const ref2 = reloadArc42Reference();
+      const ref3 = reloadArc42Reference();
+      
+      expect(ref1.version).toBe(ref2.version);
+      expect(ref2.version).toBe(ref3.version);
+      expect(ref1.date).toBe(ref2.date);
+      expect(ref2.date).toBe(ref3.date);
+      expect(ref1.sourceRepo).toBe(ref2.sourceRepo);
+      expect(ref2.sourceRepo).toBe(ref3.sourceRepo);
+    });
+  });
+
+  describe('getSubmoduleCommitSha', () => {
+    it('should return a string', () => {
+      const result = getSubmoduleCommitSha();
+      expect(typeof result).toBe('string');
+    });
+
+    it('should return either a valid SHA or "unknown"', () => {
+      const result = getSubmoduleCommitSha();
+      
+      // Either a 40-char hex string or 'unknown'
+      const isValidSha = /^[a-f0-9]{40}$/.test(result);
+      const isUnknown = result === 'unknown';
+      
+      expect(isValidSha || isUnknown).toBe(true);
+    });
+
+    it('should return consistent values on repeated calls', () => {
+      const result1 = getSubmoduleCommitSha();
+      const result2 = getSubmoduleCommitSha();
+      const result3 = getSubmoduleCommitSha();
+      
+      expect(result1).toBe(result2);
+      expect(result2).toBe(result3);
+    });
+
+    it('should return same value as ARC42_REFERENCE.commitSha when submodule is available', () => {
+      if (ARC42_REFERENCE.submoduleAvailable) {
+        const result = getSubmoduleCommitSha();
+        expect(result).toBe(ARC42_REFERENCE.commitSha);
+      }
+    });
+
+    it('should have non-zero length result', () => {
+      const result = getSubmoduleCommitSha();
+      expect(result.length).toBeGreaterThan(0);
+    });
   });
 
   describe('dynamic loading from submodule', () => {
@@ -175,6 +260,132 @@ describe('arc42-reference', () => {
         expect(ARC42_REFERENCE.version).toMatch(/^\d+\.\d+-[A-Z]+$/);
         expect(ARC42_REFERENCE.notes).toContain('Fallback values used - submodule not available');
       }
+    });
+  });
+
+  describe('parseVersionProperties', () => {
+    it('should parse valid version.properties content', () => {
+      const content = `revnumber=9.0-EN
+revdate=July 2025`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('9.0-EN');
+      expect(result.revdate).toBe('July 2025');
+    });
+
+    it('should handle content with comments', () => {
+      const content = `# This is a comment
+revnumber=9.0-EN
+# Another comment
+revdate=July 2025`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('9.0-EN');
+      expect(result.revdate).toBe('July 2025');
+    });
+
+    it('should handle empty lines', () => {
+      const content = `
+revnumber=9.0-EN
+
+revdate=July 2025
+`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('9.0-EN');
+      expect(result.revdate).toBe('July 2025');
+    });
+
+    it('should handle lines with only whitespace', () => {
+      const content = `   
+revnumber=9.0-EN
+   
+revdate=July 2025`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('9.0-EN');
+      expect(result.revdate).toBe('July 2025');
+    });
+
+    it('should return empty strings for missing properties', () => {
+      const content = `someother=value`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('');
+      expect(result.revdate).toBe('');
+    });
+
+    it('should handle empty content', () => {
+      const result = parseVersionProperties('');
+      
+      expect(result.revnumber).toBe('');
+      expect(result.revdate).toBe('');
+    });
+
+    it('should handle content with only comments', () => {
+      const content = `# comment 1
+# comment 2`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('');
+      expect(result.revdate).toBe('');
+    });
+
+    it('should handle values containing equals signs', () => {
+      const content = `revnumber=9.0-EN
+revdate=July 2025
+formula=a=b+c`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('9.0-EN');
+      expect(result.revdate).toBe('July 2025');
+    });
+
+    it('should trim whitespace from keys and values', () => {
+      const content = `  revnumber  =  9.0-EN  
+  revdate  =  July 2025  `;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('9.0-EN');
+      expect(result.revdate).toBe('July 2025');
+    });
+
+    it('should handle lines without value part', () => {
+      const content = `revnumber=9.0-EN
+invalidline
+revdate=July 2025`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('9.0-EN');
+      expect(result.revdate).toBe('July 2025');
+    });
+
+    it('should handle lines with empty value', () => {
+      const content = `revnumber=
+revdate=July 2025`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('');
+      expect(result.revdate).toBe('July 2025');
+    });
+
+    it('should handle Windows-style line endings', () => {
+      const content = `revnumber=9.0-EN\r\nrevdate=July 2025\r\n`;
+      
+      const result = parseVersionProperties(content);
+      
+      expect(result.revnumber).toBe('9.0-EN');
+      expect(result.revdate).toBe('July 2025');
     });
   });
 });

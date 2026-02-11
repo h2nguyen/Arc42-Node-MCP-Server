@@ -231,5 +231,18 @@ describe('arc42-status', () => {
         contentCleanup();
       }
     });
+
+    it('should include arc42 template reference information', async () => {
+      await mkdir(context.workspaceRoot, { recursive: true });
+      await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
+
+      const result = await arc42StatusHandler({}, context);
+
+      expect(result.success).toBe(true);
+      expect(result.data.arc42TemplateReference).toBeDefined();
+      expect(result.data.arc42TemplateReference.version).toBeDefined();
+      expect(result.data.arc42TemplateReference.date).toBeDefined();
+      expect(result.data.arc42TemplateReference.source).toBeDefined();
+    });
   });
 });

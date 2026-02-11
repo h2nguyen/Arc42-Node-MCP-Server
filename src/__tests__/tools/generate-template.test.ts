@@ -201,5 +201,47 @@ describe('generate-template', () => {
         expect(result.data.template.length).toBeGreaterThan(0);
       }
     });
+
+    it('should handle error when invalid section causes runtime error', async () => {
+      // Pass an invalid section to trigger a runtime error when accessing metadata.title
+      const result = await generateTemplateHandler({
+        section: 'invalid_section_that_does_not_exist'
+      }, context);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Failed to generate template');
+    });
+
+    it('should convert Error instance to message string', async () => {
+      // Pass invalid section to trigger error - Error instance path
+      const result = await generateTemplateHandler({
+        section: '99_nonexistent'
+      }, context);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('Failed to generate template');
+      // Error message should be a string
+      expect(typeof result.message).toBe('string');
+    });
+
+    it('should handle error gracefully for malformed section input', async () => {
+      // Test with various invalid section values to ensure catch block is executed
+      const invalidSections = [
+        'not_a_valid_section',
+        '00_invalid',
+        '13_extra_section',
+        'INVALID_UPPERCASE'
+      ];
+
+      for (const invalidSection of invalidSections) {
+        const result = await generateTemplateHandler({
+          section: invalidSection
+        }, context);
+
+        expect(result.success).toBe(false);
+        expect(result.message).toBeDefined();
+        expect(result.message).toContain('Failed to generate template');
+      }
+    });
   });
 });

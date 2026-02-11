@@ -191,3 +191,12 @@ export function resolveWorkspaceRoot(context: ToolContext, targetFolder?: string
     workspaceRoot: context.workspaceRoot
   };
 }
+
+// Helper function to extract error message from unknown error type
+// This handles both Error instances and non-Error thrown values
+export function getErrorMessage(error: unknown): string {
+  if (error instanceof Error) {
+    return error.message;
+  }
+  return String(error);
+}

@@ -212,5 +212,6 @@ describe('arc42-init', () => {
         expect(configContent).toContain('projectName: new-project');
       });
     });
+
   });
 });
