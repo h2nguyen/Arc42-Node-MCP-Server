@@ -1,6 +1,6 @@
-# Contributing to arc42 MCP Server
+# Contributing to Arc42 Node MCP Server
 
-Thank you for your interest in contributing to the arc42 MCP Server! This project serves the global software architecture community, and we welcome contributions from developers worldwide.
+Thank you for your interest in contributing to the Arc42 Node MCP Server! This project serves the global software architecture community, and we welcome contributions from developers worldwide.
 
 ## Code of Conduct
 
@@ -34,7 +34,7 @@ This project follows a code of conduct that all contributors are expected to adh
 
 3. **Make your changes**:
    - Write clear, documented code
-   - Follow existing code style
+   - Follow the existing code style
    - Add tests for new features
    - Update documentation as needed
 
@@ -53,7 +53,7 @@ This project follows a code of conduct that all contributors are expected to adh
 6. **Push and create PR**:
    - Push your branch to your fork
    - Create a Pull Request with a clear description
-   - Link related issues
+   - Link-related issues
    - Wait for review
 
 ## Development Guidelines
@@ -67,16 +67,43 @@ Arc42-Node-MCP-Server/
 │   ├── server.ts             # MCP server implementation
 │   ├── index.ts              # Entry point
 │   ├── tools/                # MCP tools
-│   │   ├── index.ts
+│   │   ├── index.ts          # Tool registry
 │   │   ├── arc42-workflow-guide.ts
 │   │   ├── arc42-init.ts
 │   │   ├── arc42-status.ts
+│   │   ├── get-section.ts
 │   │   ├── update-section.ts
 │   │   └── generate-template.ts
-│   └── templates/            # arc42 section templates
-│       └── index.ts
+│   ├── templates/            # arc42 section templates
+│   │   ├── index.ts
+│   │   └── arc42-reference.ts
+│   └── __tests__/            # Test files
+│       ├── types.test.ts
+│       ├── fixtures/
+│       │   └── test-helpers.ts
+│       ├── templates/
+│       │   ├── arc42-reference.test.ts
+│       │   └── index.test.ts
+│       └── tools/
+│           ├── arc42-init.test.ts
+│           ├── arc42-status.test.ts
+│           ├── arc42-workflow-guide.test.ts
+│           ├── generate-template.test.ts
+│           ├── get-section.test.ts
+│           └── update-section.test.ts
+├── docs/                     # Documentation
+├── scripts/                  # Utility scripts
+├── release_notes/            # Release notes
+├── .github/workflows/        # CI/CD configuration
 ├── package.json
 ├── tsconfig.json
+├── vitest.config.ts          # Test configuration
+├── Dockerfile                # Container build
+├── docker-compose.yml        # Container orchestration
+├── CHANGELOG.md
+├── LICENSE                   # Apache 2.0 License
+├── LICENSE-ARC42             # arc42 CC BY-SA 4.0 License
+├── NOTICE                    # Third-party notices
 └── README.md
 ```
 
@@ -123,7 +150,7 @@ Arc42-Node-MCP-Server/
    ```
 
 3. Register in `src/tools/index.ts`
-4. Add tests
+4. Add tests in `src/__tests__/tools/`
 5. Update documentation
 
 ### Adding a New Template
@@ -136,6 +163,8 @@ Arc42-Node-MCP-Server/
 ### Testing
 
 - Write unit tests for new functionality
+- Run tests with `npm test` or `npm run test:watch`
+- Check coverage with `npm run test:coverage`
 - Test with real MCP clients (Claude, Cursor)
 - Verify documentation is generated correctly
 - Check error handling
@@ -172,4 +201,4 @@ See [NOTICE](NOTICE) and [LICENSE-ARC42](LICENSE-ARC42) for more details on thir
 
 ## Acknowledgments
 
-Thank you for contributing to the arc42 MCP Server and supporting the global software architecture community!
+Thank you for contributing to the Arc42 Node MCP Server and supporting the global software architecture community!
