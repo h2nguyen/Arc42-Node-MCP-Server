@@ -9,8 +9,8 @@ import {
   toMCPResponse,
   ARC42_SECTIONS,
   SECTION_METADATA,
+  getErrorMessage,
   type ToolResponse,
-  type Arc42Section,
   type MCPToolResponse
 } from '../types.js';
 
@@ -187,6 +187,64 @@ describe('types.ts', () => {
       expect(parsedContent.data.array).toEqual([1, 2, 3]);
       expect(parsedContent.data.nullValue).toBeNull();
       expect(parsedContent.data.boolValue).toBe(false);
+    });
+  });
+
+  describe('getErrorMessage', () => {
+    it('should extract message from Error instance', () => {
+      const error = new Error('Test error message');
+      expect(getErrorMessage(error)).toBe('Test error message');
+    });
+
+    it('should extract message from TypeError', () => {
+      const error = new TypeError('Type error occurred');
+      expect(getErrorMessage(error)).toBe('Type error occurred');
+    });
+
+    it('should extract message from custom Error subclass', () => {
+      class CustomError extends Error {
+        constructor(message: string) {
+          super(message);
+          this.name = 'CustomError';
+        }
+      }
+      const error = new CustomError('Custom error message');
+      expect(getErrorMessage(error)).toBe('Custom error message');
+    });
+
+    it('should convert string thrown value to string', () => {
+      const error = 'string error message';
+      expect(getErrorMessage(error)).toBe('string error message');
+    });
+
+    it('should convert number thrown value to string', () => {
+      const error = 42;
+      expect(getErrorMessage(error)).toBe('42');
+    });
+
+    it('should convert null thrown value to string', () => {
+      const error = null;
+      expect(getErrorMessage(error)).toBe('null');
+    });
+
+    it('should convert undefined thrown value to string', () => {
+      const error = undefined;
+      expect(getErrorMessage(error)).toBe('undefined');
+    });
+
+    it('should convert object thrown value to string', () => {
+      const error = { code: 'ERROR_CODE', detail: 'details' };
+      expect(getErrorMessage(error)).toBe('[object Object]');
+    });
+
+    it('should handle boolean thrown value', () => {
+      expect(getErrorMessage(false)).toBe('false');
+      expect(getErrorMessage(true)).toBe('true');
+    });
+
+    it('should handle array thrown value', () => {
+      const error = ['error1', 'error2'];
+      expect(getErrorMessage(error)).toBe('error1,error2');
     });
   });
 

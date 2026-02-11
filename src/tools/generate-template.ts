@@ -1,5 +1,5 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { ToolContext, ToolResponse, Arc42Section, SECTION_METADATA } from '../types.js';
+import { ToolContext, ToolResponse, Arc42Section, SECTION_METADATA, getErrorMessage } from '../types.js';
 import { getSectionTemplate } from '../templates/index.js';
 
 export const generateTemplateTool: Tool = {
@@ -67,10 +67,9 @@ export async function generateTemplateHandler(
     };
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      message: `Failed to generate template: ${errorMessage}`
+      message: `Failed to generate template: ${getErrorMessage(error)}`
     };
   }
 }

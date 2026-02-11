@@ -1,5 +1,5 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { ToolContext, ToolResponse, resolveWorkspaceRoot } from '../types.js';
+import { ToolContext, ToolResponse, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
 import { ARC42_REFERENCE, getArc42ReferenceConfig } from '../templates/index.js';
 import { mkdir, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
@@ -153,10 +153,9 @@ arc42_template_commit: ${ARC42_REFERENCE.commitSha}
     };
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      message: `Failed to initialize workspace: ${errorMessage}`
+      message: `Failed to initialize workspace: ${getErrorMessage(error)}`
     };
   }
 }

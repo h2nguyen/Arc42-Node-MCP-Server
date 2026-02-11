@@ -90,5 +90,17 @@ describe('get-section', () => {
       expect(result.data.content).toBe('');
       expect(result.data.metadata.wordCount).toBe(0);
     });
+
+    it('should fail if section parameter is missing', async () => {
+      const result = await getSectionHandler({}, context);
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('required');
+    });
+
+    it('should fail if section parameter is undefined', async () => {
+      const result = await getSectionHandler({ section: undefined }, context);
+      expect(result.success).toBe(false);
+      expect(result.message).toContain('required');
+    });
   });
 });

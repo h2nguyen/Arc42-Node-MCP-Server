@@ -1,5 +1,5 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { ToolContext, ToolResponse, Arc42Section, SECTION_METADATA, resolveWorkspaceRoot } from '../types.js';
+import { ToolContext, ToolResponse, Arc42Section, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
 import { existsSync } from 'fs';
 import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
@@ -109,10 +109,9 @@ export async function updateSectionHandler(
     };
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      message: `Failed to update section: ${errorMessage}`
+      message: `Failed to update section: ${getErrorMessage(error)}`
     };
   }
 }

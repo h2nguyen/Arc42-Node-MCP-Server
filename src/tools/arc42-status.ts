@@ -1,5 +1,5 @@
 import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { ToolContext, ToolResponse, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot } from '../types.js';
+import { ToolContext, ToolResponse, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
 import { ARC42_REFERENCE } from '../templates/index.js';
 import { existsSync, statSync, readFileSync } from 'fs';
 import { join } from 'path';
@@ -122,10 +122,9 @@ export async function arc42StatusHandler(
     };
 
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : String(error);
     return {
       success: false,
-      message: `Failed to check status: ${errorMessage}`
+      message: `Failed to check status: ${getErrorMessage(error)}`
     };
   }
 }

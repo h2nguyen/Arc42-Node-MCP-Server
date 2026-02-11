@@ -38,8 +38,9 @@ export interface Arc42Reference {
 
 /**
  * Parse version.properties file content
+ * @internal Exported for testing purposes
  */
-function parseVersionProperties(content: string): { revnumber: string; revdate: string } {
+export function parseVersionProperties(content: string): { revnumber: string; revdate: string } {
   const lines = content.split('\n');
   const props: Record<string, string> = {};
   
@@ -61,8 +62,9 @@ function parseVersionProperties(content: string): { revnumber: string; revdate: 
 
 /**
  * Get commit SHA from git submodule
+ * @internal Exported for testing purposes
  */
-function getSubmoduleCommitSha(): string {
+export function getSubmoduleCommitSha(): string {
   try {
     // Try to get commit from the submodule itself
     const result = execSync('git rev-parse HEAD', {
