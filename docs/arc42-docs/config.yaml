@@ -1,0 +1,13 @@
+# arc42 Documentation Configuration
+projectName: Arc42 MCP Server
+version: 1.0.0
+created: 2026-02-11T16:26:14.042Z
+format: markdown
+language: en
+
+# arc42 Template Reference
+# This documents which version of the arc42 template this documentation is based on.
+# Source: https://github.com/arc42/arc42-template
+arc42_template_version: 9.0-EN
+arc42_template_date: July 2025
+arc42_template_commit: b29e08928644af7ae49f51d729d14313db0d934c

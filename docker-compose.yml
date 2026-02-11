@@ -1,0 +1,83 @@
+# Docker Compose for arc42 MCP Server local testing
+#
+# This setup provides two options for testing:
+# 1. Build and run the MCP server container
+# 2. Use MCP Inspector with stdio transport
+#
+# Usage:
+#   # Option 1: Just build and test manually
+#   docker compose build
+#   docker compose run --rm arc42-node-mcp-server
+#
+#   # Option 2: Use MCP Inspector (stdio mode)
+#   docker compose up mcp-inspector
+#
+# Then access MCP Inspector at: http://localhost:6274
+
+services:
+  # arc42 MCP Server - build and run the server
+  arc42-node-mcp-server:
+    build: .
+    image: arc42-node-mcp-server:latest
+    container_name: arc42-node-mcp-server
+    stdin_open: true
+    tty: true
+    volumes:
+      # Mount a test project directory for documentation output
+      - ./test-project:/project
+      # Mount workspace for generated arc42 docs
+      - arc42-workspace:/project/arc42-docs
+    networks:
+      - arc42-mcp-network
+
+  # MCP Inspector - standalone UI for manual server configuration
+  # Note: On macOS, the server doesn't auto-connect. You must manually configure
+  # the connection in the UI using container paths: /app/dist/index.js /project
+  mcp-inspector:
+    image: node:24-slim
+    container_name: arc42-mcp-inspector
+    ports:
+      - "6274:6274"
+      - "6277:6277"
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    environment:
+      - DANGEROUSLY_OMIT_AUTH=true
+    volumes:
+      # Mount the built dist folder (run 'npm run build' first locally)
+      - ./dist:/app/dist:ro
+      - ./package.json:/app/package.json:ro
+      - ./node_modules:/app/node_modules:ro
+      # Mount test project directory
+      - ./test-project:/project
+    # Start MCP Inspector bound to 0.0.0.0 (required for Docker port forwarding)
+    # User must configure server connection manually in UI with container paths
+    command: >
+      sh -c "npm install -g @modelcontextprotocol/inspector && 
+             HOST=0.0.0.0 npx @modelcontextprotocol/inspector"
+    networks:
+      - arc42-mcp-network
+
+  # Alternative: Development mode with live reload
+  dev:
+    image: node:24-slim
+    container_name: arc42-mcp-dev
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./test-project:/project
+    command: >
+      sh -c "npm install && npm run dev /project"
+    networks:
+      - arc42-mcp-network
+
+networks:
+  arc42-mcp-network:
+    driver: bridge
+
+volumes:
+  arc42-workspace:

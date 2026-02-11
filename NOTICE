@@ -1,0 +1,46 @@
+arc42 MCP Server
+Copyright 2026 Contributors to the Arc42-Node-MCP-Server project
+
+Created by Viet Hai Nguyen (me@viethainguyen.de)
+GitHub: https://github.com/h2nguyen
+
+This product includes software developed at
+The arc42 MCP Server Project (https://github.com/h2nguyen/Arc42-Node-MCP-Server)
+
+================================================================================
+Third-Party Content
+================================================================================
+
+arc42 Architecture Documentation Template
+-----------------------------------------
+This project uses material from the arc42 architecture documentation template.
+
+  * Source: https://arc42.org/
+  * License: Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
+  * License URL: https://creativecommons.org/licenses/by-sa/4.0/
+  * Copyright: Dr. Gernot Starke and Dr. Peter Hruschka
+
+The arc42 template content is used under the terms of the CC BY-SA 4.0 license.
+Any modifications to arc42 template content are shared under the same license.
+
+The following components contain arc42 template material:
+  - Section templates (src/templates/)
+  - Generated documentation structure
+  - Workflow guides and section guidance
+
+For the full arc42 license terms, see LICENSE-ARC42 in this repository.
+For more information about arc42, visit https://arc42.org/
+
+================================================================================
+Attribution Requirements
+================================================================================
+
+If you redistribute this software or create derivative works:
+
+1. For the SOFTWARE CODE: Apache License 2.0 terms apply (see LICENSE file)
+
+2. For the ARC42 TEMPLATE CONTENT: CC BY-SA 4.0 terms apply, which require:
+   - Attribution to Dr. Gernot Starke and Dr. Peter Hruschka
+   - Link to the original arc42 project (https://arc42.org/)
+   - Indication of any modifications made
+   - Distribution under the same CC BY-SA 4.0 license
