@@ -13,12 +13,13 @@ A Model Context Protocol (MCP) server that helps you create comprehensive archit
 <!-- TOC -->
 * [📋 What is arc42?](#-what-is-arc42)
   * [arc42 Template Reference](#arc42-template-reference)
-    * [Updating to Latest arc42 Template](#updating-to-latest-arc42-template)
+    * [Updating to the Latest arc42 Template](#updating-to-the-latest-arc42-template)
 * [🚀 Quick Start](#-quick-start)
   * [Installation](#installation)
   * [Setup in Claude Desktop](#setup-in-claude-desktop)
   * [Setup in Cursor](#setup-in-cursor)
   * [Setup in Cline](#setup-in-cline)
+    * [Troubleshooting: NVM Users](#troubleshooting-nvm-users)
   * [Understanding Workspace Configuration](#understanding-workspace-configuration)
     * [Option 1: Default Workspace Path (Server Startup Argument)](#option-1-default-workspace-path-server-startup-argument)
     * [Option 2: Dynamic targetFolder Parameter (Per-Tool Override)](#option-2-dynamic-targetfolder-parameter-per-tool-override)
@@ -130,12 +131,14 @@ npm run submodule:init
 ### Installation
 
 ```bash
-# Install latest version
+# Install globally (installs latest version by default)
 npm install -g @h2nguyen/arc42-node-mcp-server
 
-# Install specific version
-npm install -g @h2nguyen/arc42-node-mcp-server@1.0.3
+# Or install a specific version
+npm install -g @h2nguyen/arc42-node-mcp-server@<version>
 ```
+
+> **Tip**: Check [npm](https://www.npmjs.com/package/@h2nguyen/arc42-node-mcp-server) or [GitHub Releases](https://github.com/h2nguyen/Arc42-Node-MCP-Server/releases) for available versions.
 
 ### Setup in Claude Desktop
 
@@ -174,7 +177,48 @@ Add to your MCP settings in Cursor:
 
 Add to your Cline MCP settings file (`~/.cline/data/settings/cline_mcp_settings.json`):
 
-**Using npm package (recommended):**
+**Using npm package with NVM (recommended):**
+
+> ⚠️ **Important for NVM users**: Cline spawns MCP servers without loading your shell profile (`.zshrc`/`.bashrc`), so NVM-managed Node.js paths are not in PATH. You must use **full absolute paths** to both the Node.js binary and the `arc42-mcp` command. See [Troubleshooting: NVM Users](#troubleshooting-nvm-users) for details.
+
+```json
+{
+  "mcpServers": {
+    "arc42-mcp-server": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "/path/to/.nvm/versions/node/vXX.X.X/bin/node",
+      "args": [
+        "/path/to/.nvm/versions/node/vXX.X.X/bin/arc42-mcp",
+        "/path/to/your/project"
+      ],
+      "autoApprove": [
+        "arc42-workflow-guide",
+        "arc42-init",
+        "arc42-status",
+        "update-section",
+        "generate-template",
+        "get-section"
+      ]
+    }
+  }
+}
+```
+
+To find your NVM paths, run:
+```bash
+# Get the Node.js binary path
+nvm which current
+# Example output: /Users/yourname/.nvm/versions/node/v24.13.0/bin/node
+
+# The arc42-mcp command is in the same bin directory
+# /Users/yourname/.nvm/versions/node/v24.13.0/bin/arc42-mcp
+```
+
+**Using npm package without NVM (system Node.js):**
+
+If Node.js is installed system-wide (not via NVM), you can use the simpler configuration:
 
 ```json
 {
@@ -209,7 +253,8 @@ Add to your Cline MCP settings file (`~/.cline/data/settings/cline_mcp_settings.
       "type": "stdio",
       "command": "node",
       "args": [
-        "/path/to/your/local/build/e.g./Arc42-Node-MCP-Server/dist/index.js"
+        "/path/to/Arc42-Node-MCP-Server/dist/index.js",
+        "/path/to/your/project"
       ],
       "autoApprove": [
         "arc42-workflow-guide",
@@ -223,6 +268,20 @@ Add to your Cline MCP settings file (`~/.cline/data/settings/cline_mcp_settings.
   }
 }
 ```
+
+> **Note**: For local builds with NVM, use the full path to the Node.js binary as the `command` instead of just `node`.
+
+#### Troubleshooting: NVM Users
+
+If you see "MCP error -32001: Request timed out" or the server fails to start, this is typically caused by NVM path issues:
+
+1. **Problem**: Cline spawns processes without sourcing shell profiles, so `node` and `arc42-mcp` commands resolve to system paths (or aren't found at all) instead of NVM-managed versions.
+
+2. **Solution**: Use full absolute paths in your configuration:
+   - `command`: Full path to the Node.js binary (e.g., `~/.nvm/versions/node/v24.13.0/bin/node`)
+   - First `args` item: Full path to `arc42-mcp` (e.g., `~/.nvm/versions/node/v24.13.0/bin/arc42-mcp`)
+
+3. **Why both paths?**: Even if you use the full path to `arc42-mcp`, the script's shebang (`#!/usr/bin/env node`) will resolve `node` from PATH, which may point to an incompatible system Node.js version. By specifying Node.js directly as the command, we bypass the shebang entirely.
 
 ### Understanding Workspace Configuration
 
