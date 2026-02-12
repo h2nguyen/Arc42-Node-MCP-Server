@@ -134,7 +134,7 @@ npm run submodule:init
 npm install -g @h2nguyen/arc42-node-mcp-server
 
 # Install specific version
-npm install -g @h2nguyen/arc42-node-mcp-server@1.0.2
+npm install -g @h2nguyen/arc42-node-mcp-server@1.0.3
 ```
 
 ### Setup in Claude Desktop
