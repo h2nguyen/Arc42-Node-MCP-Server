@@ -1,6 +1,6 @@
 {
   "name": "@h2nguyen/arc42-node-mcp-server",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "MCP server for arc42 architecture documentation - AI-assisted architecture documentation following arc42 template",
   "main": "dist/index.js",
   "type": "module",
