@@ -147,6 +147,21 @@ Add to your Claude configuration file:
 - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
 - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
 
+**Using npx (no installation required):**
+
+```json
+{
+  "mcpServers": {
+    "arc42-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@h2nguyen/arc42-node-mcp-server", "/path/to/your/project"]
+    }
+  }
+}
+```
+
+**Using global installation:**
+
 ```json
 {
   "mcpServers": {
@@ -161,6 +176,21 @@ Add to your Claude configuration file:
 ### Setup in Cursor
 
 Add to your MCP settings in Cursor:
+
+**Using npx (no installation required):**
+
+```json
+{
+  "mcpServers": {
+    "arc42-mcp-server": {
+      "command": "npx",
+      "args": ["-y", "@h2nguyen/arc42-node-mcp-server", "${workspaceFolder}"]
+    }
+  }
+}
+```
+
+**Using global installation:**
 
 ```json
 {
@@ -177,7 +207,33 @@ Add to your MCP settings in Cursor:
 
 Add to your Cline MCP settings file (`~/.cline/data/settings/cline_mcp_settings.json`):
 
-**Using npm package with NVM (recommended):**
+**Using npx (no installation required):**
+
+```json
+{
+  "mcpServers": {
+    "arc42-mcp-server": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "@h2nguyen/arc42-node-mcp-server", "/path/to/your/project"],
+      "autoApprove": [
+        "arc42-workflow-guide",
+        "arc42-init",
+        "arc42-status",
+        "update-section",
+        "generate-template",
+        "get-section"
+      ]
+    }
+  }
+}
+```
+
+> ⚠️ **Important for NVM users**: For the npx approach to work with NVM, you may need to use the full path to npx: `/path/to/.nvm/versions/node/vXX.X.X/bin/npx`
+
+**Using npm package with NVM:**
 
 > ⚠️ **Important for NVM users**: Cline spawns MCP servers without loading your shell profile (`.zshrc`/`.bashrc`), so NVM-managed Node.js paths are not in PATH. You must use **full absolute paths** to both the Node.js binary and the `arc42-mcp` command. See [Troubleshooting: NVM Users](#troubleshooting-nvm-users) for details.
 
