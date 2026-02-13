@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/multi-language-templates/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-02-12T20:47:53.055Z",
+      "trigger": "initial",
+      "approvalId": "approval_1770929273048_148xo1k07",
+      "approvalTitle": "Tasks: Multi-Language Template Support"
+    }
+  ]
+}

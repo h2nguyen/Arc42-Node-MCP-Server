@@ -1,7 +1,7 @@
 # Arc42 MCP Server - Architecture Documentation
 
-**Version**: 1.0.0  
-**Date**: 2026-02-11  
+**Version**: 2.0.0  
+**Date**: 2026-02-13  
 **Status**: Final
 
 ---

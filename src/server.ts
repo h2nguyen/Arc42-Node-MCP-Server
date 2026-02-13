@@ -1,20 +1,43 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import { z } from 'zod';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import type { ToolContext, ToolResponse, Arc42Section } from './types.js';
-import { toMCPResponse, ARC42_SECTIONS } from './types.js';
+import type { ToolContext, ToolResponse } from './types.js';
+import { toMCPResponse } from './types.js';
 
-// Import tool handlers
-import { arc42WorkflowGuideHandler } from './tools/arc42-workflow-guide.js';
-import { arc42InitHandler } from './tools/arc42-init.js';
-import { arc42StatusHandler } from './tools/arc42-status.js';
-import { updateSectionHandler } from './tools/update-section.js';
-import { getSectionHandler } from './tools/get-section.js';
-import { generateTemplateHandler } from './tools/generate-template.js';
+// Import tool handlers AND schemas (Single Source of Truth)
+import {
+  arc42WorkflowGuideHandler,
+  arc42WorkflowGuideInputSchema,
+  arc42WorkflowGuideDescription
+} from './tools/arc42-workflow-guide.js';
+import {
+  arc42InitHandler,
+  arc42InitInputSchema,
+  arc42InitDescription
+} from './tools/arc42-init.js';
+import {
+  arc42StatusHandler,
+  arc42StatusInputSchema,
+  arc42StatusDescription
+} from './tools/arc42-status.js';
+import {
+  updateSectionHandler,
+  updateSectionInputSchema,
+  updateSectionDescription
+} from './tools/update-section.js';
+import {
+  getSectionHandler,
+  getSectionInputSchema,
+  getSectionDescription
+} from './tools/get-section.js';
+import {
+  generateTemplateHandler,
+  generateTemplateInputSchema,
+  generateTemplateDescription
+} from './tools/generate-template.js';
 
 export class Arc42MCPServer {
   private mcpServer: McpServer;
@@ -91,41 +114,25 @@ export class Arc42MCPServer {
       };
     };
 
-    // Register arc42-workflow-guide tool
+    // Register arc42-workflow-guide tool (using imported schema)
     this.mcpServer.registerTool(
       'arc42-workflow-guide',
       {
-        description: `Get a comprehensive guide for arc42 architecture documentation workflow.
-
-This tool provides detailed guidance on how to document software architecture using the arc42 template. It explains the 12 sections of arc42, recommended workflow, and best practices.
-
-Use this tool when:
-- Starting a new architecture documentation project
-- Needing guidance on what to document in each section
-- Looking for best practices in architecture documentation`
+        description: arc42WorkflowGuideDescription,
+        inputSchema: arc42WorkflowGuideInputSchema
       },
-      async () => {
-        const response = await arc42WorkflowGuideHandler({}, context);
+      async (args) => {
+        const response = await arc42WorkflowGuideHandler(args as Record<string, unknown>, context);
         return toCallToolResult(response);
       }
     );
 
-    // Register arc42-init tool
+    // Register arc42-init tool (using imported schema)
     this.mcpServer.registerTool(
       'arc42-init',
       {
-        description: `Initialize arc42 documentation workspace for a project.
-
-This tool creates the complete directory structure and template files for arc42 architecture documentation. It sets up all 12 sections with templates, configuration files, and a main documentation file.
-
-Use this tool once at the beginning of your architecture documentation journey.
-
-You can optionally specify a targetFolder to create the documentation in a specific directory instead of the default workspace.`,
-        inputSchema: {
-          projectName: z.string().describe('Name of the project being documented'),
-          force: z.boolean().optional().describe('Force re-initialization even if workspace exists'),
-          targetFolder: z.string().optional().describe('Optional: Absolute path to the target folder where arc42-docs will be created. If not provided, uses the default workspace configured at server startup.')
-        }
+        description: arc42InitDescription,
+        inputSchema: arc42InitInputSchema
       },
       async (args) => {
         const response = await arc42InitHandler(args as Record<string, unknown>, context);
@@ -133,18 +140,12 @@ You can optionally specify a targetFolder to create the documentation in a speci
       }
     );
 
-    // Register arc42-status tool
+    // Register arc42-status tool (using imported schema)
     this.mcpServer.registerTool(
       'arc42-status',
       {
-        description: `Check the status of arc42 documentation.
-
-This tool provides an overview of which sections have been created, their completion status, and overall progress. Use this tool to track documentation progress and identify which sections need attention.
-
-You can optionally specify a targetFolder to check documentation status in a specific directory instead of the default workspace.`,
-        inputSchema: {
-          targetFolder: z.string().optional().describe('Optional: Absolute path to the target folder containing arc42-docs. If not provided, uses the default workspace configured at server startup.')
-        }
+        description: arc42StatusDescription,
+        inputSchema: arc42StatusInputSchema
       },
       async (args) => {
         const response = await arc42StatusHandler(args as Record<string, unknown>, context);
@@ -152,22 +153,12 @@ You can optionally specify a targetFolder to check documentation status in a spe
       }
     );
 
-    // Register update-section tool
-    const sectionValues = ARC42_SECTIONS as unknown as [Arc42Section, ...Arc42Section[]];
+    // Register update-section tool (using imported schema)
     this.mcpServer.registerTool(
       'update-section',
       {
-        description: `Update content in a specific arc42 section.
-
-This tool allows you to add or update content in any of the 12 arc42 sections. The content will be written to the appropriate section file while preserving the overall structure.
-
-You can optionally specify a targetFolder to update documentation in a specific directory instead of the default workspace.`,
-        inputSchema: {
-          section: z.enum(sectionValues).describe('The section to update (e.g., "01_introduction_and_goals")'),
-          content: z.string().describe('The markdown content to write to the section'),
-          mode: z.enum(['replace', 'append']).optional().describe('Write mode: "replace" (default) or "append"'),
-          targetFolder: z.string().optional().describe('Optional: Absolute path to the target folder containing arc42-docs. If not provided, uses the default workspace configured at server startup.')
-        }
+        description: updateSectionDescription,
+        inputSchema: updateSectionInputSchema
       },
       async (args) => {
         const response = await updateSectionHandler(args as Record<string, unknown>, context);
@@ -175,19 +166,12 @@ You can optionally specify a targetFolder to update documentation in a specific 
       }
     );
 
-    // Register get-section tool
+    // Register get-section tool (using imported schema)
     this.mcpServer.registerTool(
       'get-section',
       {
-        description: `Read content from a specific arc42 section.
-
-This tool allows you to retrieve the current content of any of the 12 arc42 sections. Use this to review existing documentation or before making updates.
-
-You can optionally specify a targetFolder to read documentation from a specific directory instead of the default workspace.`,
-        inputSchema: {
-          section: z.enum(sectionValues).describe('The section to read (e.g., "01_introduction_and_goals")'),
-          targetFolder: z.string().optional().describe('Optional: Absolute path to the target folder containing arc42-docs. If not provided, uses the default workspace configured at server startup.')
-        }
+        description: getSectionDescription,
+        inputSchema: getSectionInputSchema
       },
       async (args) => {
         const response = await getSectionHandler(args as Record<string, unknown>, context);
@@ -195,16 +179,12 @@ You can optionally specify a targetFolder to read documentation from a specific 
       }
     );
 
-    // Register generate-template tool
+    // Register generate-template tool (using imported schema)
     this.mcpServer.registerTool(
       'generate-template',
       {
-        description: `Generate a detailed template for a specific arc42 section.
-
-This tool provides the complete template structure, guidance, and examples for any of the 12 arc42 sections. Use this before documenting a section to understand what content is needed.`,
-        inputSchema: {
-          section: z.enum(sectionValues).describe('The section to generate template for')
-        }
+        description: generateTemplateDescription,
+        inputSchema: generateTemplateInputSchema
       },
       async (args) => {
         const response = await generateTemplateHandler(args as Record<string, unknown>, context);

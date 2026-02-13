@@ -1,43 +1,32 @@
-import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { ToolContext, ToolResponse, Arc42Section, SECTION_METADATA, getErrorMessage } from '../types.js';
-import { getSectionTemplate } from '../templates/index.js';
+import { z } from 'zod';
+import { ToolContext, ToolResponse, Arc42Section, SECTION_METADATA, ARC42_SECTIONS, getErrorMessage } from '../types.js';
+import {
+  getSectionTemplate,
+  getSectionMetadata,
+  SUPPORTED_LANGUAGE_CODES,
+  isLanguageCode,
+  normalizeLanguageCode
+} from '../templates/index.js';
 
-export const generateTemplateTool: Tool = {
-  name: 'generate-template',
-  description: `Generate a detailed template for a specific arc42 section.
+// Zod schema as the SINGLE SOURCE OF TRUTH for tool input
+const sectionValues = ARC42_SECTIONS as unknown as [Arc42Section, ...Arc42Section[]];
+const languageValues = SUPPORTED_LANGUAGE_CODES as unknown as [string, ...string[]];
 
-This tool provides the complete template structure, guidance, and examples for any of the 12 arc42 sections. Use this before documenting a section to understand what content is needed.`,
-  inputSchema: {
-    type: 'object',
-    properties: {
-      section: {
-        type: 'string',
-        description: 'The section to generate template for',
-        enum: [
-          '01_introduction_and_goals',
-          '02_architecture_constraints',
-          '03_context_and_scope',
-          '04_solution_strategy',
-          '05_building_block_view',
-          '06_runtime_view',
-          '07_deployment_view',
-          '08_concepts',
-          '09_architecture_decisions',
-          '10_quality_requirements',
-          '11_technical_risks',
-          '12_glossary'
-        ]
-      }
-    },
-    required: ['section']
-  }
+export const generateTemplateInputSchema = {
+  section: z.enum(sectionValues).describe('The section to generate template for'),
+  language: z.enum(languageValues).optional().default('EN').describe('Language code for the template. Supported: EN, DE, ES, FR, IT, NL, PT, RU, CZ, UKR, ZH. Defaults to EN.')
 };
+
+export const generateTemplateDescription = `Generate a detailed template for a specific arc42 section.
+
+This tool provides the complete template structure, guidance, and examples for any of the 12 arc42 sections. Use this before documenting a section to understand what content is needed.`;
 
 export async function generateTemplateHandler(
   args: Record<string, unknown>,
   _context: ToolContext
 ): Promise<ToolResponse> {
   const section = args.section as string | undefined;
+  const languageArg = (args.language as string) ?? 'EN';
 
   if (!section) {
     return {
@@ -46,16 +35,44 @@ export async function generateTemplateHandler(
     };
   }
 
+  // Validate and normalize language code
+  let language: string;
   try {
-    const metadata = SECTION_METADATA[section as Arc42Section];
-    const template = getSectionTemplate(section as Arc42Section);
+    const normalizedLanguage = normalizeLanguageCode(languageArg);
+    if (!isLanguageCode(normalizedLanguage)) {
+      return {
+        success: false,
+        message: `Unsupported language code: ${languageArg}. Supported languages: ${SUPPORTED_LANGUAGE_CODES.join(', ')}`
+      };
+    }
+    language = normalizedLanguage;
+  } catch {
+    return {
+      success: false,
+      message: `Invalid language code: ${languageArg}. Supported languages: ${SUPPORTED_LANGUAGE_CODES.join(', ')}`
+    };
+  }
+
+  try {
+    // Get localized metadata and template
+    const localizedMetadata = getSectionMetadata(section as Arc42Section, language);
+    const template = getSectionTemplate(section as Arc42Section, language);
+
+    // Also include the standard metadata for reference
+    const standardMetadata = SECTION_METADATA[section as Arc42Section];
 
     return {
       success: true,
-      message: `Template for ${metadata.title} generated`,
+      message: `Template for ${localizedMetadata.title} generated (language: ${language})`,
       data: {
         section,
-        metadata,
+        language,
+        metadata: {
+          ...standardMetadata,
+          title: localizedMetadata.title,
+          description: localizedMetadata.description,
+          languageCode: localizedMetadata.languageCode
+        },
         template
       },
       nextSteps: [

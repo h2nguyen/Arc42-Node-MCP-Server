@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { arc42StatusHandler, arc42StatusTool } from '../../tools/arc42-status.js';
+import { arc42StatusHandler, arc42StatusInputSchema, arc42StatusDescription } from '../../tools/arc42-status.js';
 import { createTestContext, createInitializedWorkspace, createWorkspaceWithContent, ALL_SECTIONS } from '../fixtures/test-helpers.js';
 import type { ToolContext } from '../../types.js';
 
@@ -23,21 +23,15 @@ describe('arc42-status', () => {
     cleanup();
   });
 
-  describe('arc42StatusTool definition', () => {
-    it('should have correct tool name', () => {
-      expect(arc42StatusTool.name).toBe('arc42-status');
-    });
-
+  describe('arc42Status schema definition', () => {
     it('should have a descriptive description', () => {
-      expect(arc42StatusTool.description).toContain('status');
-      expect(arc42StatusTool.description).toContain('arc42');
+      expect(arc42StatusDescription).toContain('status');
+      expect(arc42StatusDescription).toContain('arc42');
     });
 
     it('should have optional targetFolder parameter', () => {
-      const properties = arc42StatusTool.inputSchema.properties as Record<string, unknown>;
-      expect(properties.targetFolder).toBeDefined();
-      // No required parameters
-      expect(arc42StatusTool.inputSchema.required).toBeUndefined();
+      expect(arc42StatusInputSchema.targetFolder).toBeDefined();
+      expect(arc42StatusInputSchema.targetFolder.isOptional()).toBe(true);
     });
   });
 
@@ -77,7 +71,7 @@ describe('arc42-status', () => {
       const result = await arc42StatusHandler({}, context);
 
       expect(result.success).toBe(true);
-      
+
       const sections = result.data.sections as Record<string, { exists: boolean }>;
       ALL_SECTIONS.forEach(section => {
         expect(sections[section].exists).toBe(false);
@@ -95,7 +89,7 @@ describe('arc42-status', () => {
       const result = await arc42StatusHandler({}, context);
 
       expect(result.success).toBe(true);
-      
+
       const sections = result.data.sections as Record<string, { exists: boolean }>;
       expect(sections[sectionName].exists).toBe(true);
     });
@@ -112,7 +106,7 @@ describe('arc42-status', () => {
       const result = await arc42StatusHandler({}, context);
 
       expect(result.success).toBe(true);
-      
+
       const sections = result.data.sections as Record<string, { wordCount: number }>;
       expect(sections[sectionName].wordCount).toBe(5);
     });
@@ -130,7 +124,7 @@ describe('arc42-status', () => {
       const result = await arc42StatusHandler({}, context);
 
       expect(result.success).toBe(true);
-      
+
       const sections = result.data.sections as Record<string, { completeness: number }>;
       expect(sections[sectionName].completeness).toBe(50);
     });
@@ -148,7 +142,7 @@ describe('arc42-status', () => {
       const result = await arc42StatusHandler({}, context);
 
       expect(result.success).toBe(true);
-      
+
       const sections = result.data.sections as Record<string, { completeness: number }>;
       expect(sections[sectionName].completeness).toBe(100);
     });
@@ -184,7 +178,7 @@ describe('arc42-status', () => {
       const result = await arc42StatusHandler({}, context);
 
       expect(result.success).toBe(true);
-      
+
       const sections = result.data.sections as Record<string, { metadata: { title: string } }>;
       expect(sections['01_introduction_and_goals'].metadata).toBeDefined();
       expect(sections['01_introduction_and_goals'].metadata.title).toContain('Introduction');
@@ -203,7 +197,7 @@ describe('arc42-status', () => {
 
     it('should work with targetFolder parameter', async () => {
       const { context: customContext, cleanup: customCleanup } = createInitializedWorkspace();
-      
+
       try {
         const result = await arc42StatusHandler({
           targetFolder: customContext.projectPath
@@ -218,7 +212,7 @@ describe('arc42-status', () => {
 
     it('should correctly count sections with content', async () => {
       const { context: contentContext, cleanup: contentCleanup } = createWorkspaceWithContent();
-      
+
       try {
         const result = await arc42StatusHandler({
           targetFolder: contentContext.projectPath
@@ -243,6 +237,116 @@ describe('arc42-status', () => {
       expect(result.data.arc42TemplateReference.version).toBeDefined();
       expect(result.data.arc42TemplateReference.date).toBeDefined();
       expect(result.data.arc42TemplateReference.source).toBeDefined();
+    });
+
+    describe('language display', () => {
+      it('should default to EN when config.yaml has no language', async () => {
+        // Arrange
+        await mkdir(context.workspaceRoot, { recursive: true });
+        await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
+
+        // Act
+        const result = await arc42StatusHandler({}, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.language).toBeDefined();
+        expect(result.data.language.code).toBe('EN');
+        expect(result.data.language.name).toBe('English');
+      });
+
+      it('should read language from config.yaml', async () => {
+        // Arrange
+        await mkdir(context.workspaceRoot, { recursive: true });
+        await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
+        await writeFile(
+          join(context.workspaceRoot, 'config.yaml'),
+          'projectName: test\nlanguage: DE\n'
+        );
+
+        // Act
+        const result = await arc42StatusHandler({}, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.language.code).toBe('DE');
+        expect(result.data.language.name).toBe('German');
+        expect(result.data.language.nativeName).toBe('Deutsch');
+      });
+
+      it('should include available languages list', async () => {
+        // Arrange
+        await mkdir(context.workspaceRoot, { recursive: true });
+        await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
+
+        // Act
+        const result = await arc42StatusHandler({}, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.availableLanguages).toBeDefined();
+        expect(Array.isArray(result.data.availableLanguages)).toBe(true);
+        expect(result.data.availableLanguages.length).toBe(11);
+
+        // Check that all 11 languages are present
+        const codes = result.data.availableLanguages.map((lang: { code: string }) => lang.code);
+        expect(codes).toContain('EN');
+        expect(codes).toContain('DE');
+        expect(codes).toContain('FR');
+      });
+
+      it('should display localized section titles based on language', async () => {
+        // Arrange
+        await mkdir(context.workspaceRoot, { recursive: true });
+        await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
+        await writeFile(
+          join(context.workspaceRoot, 'config.yaml'),
+          'projectName: test\nlanguage: DE\n'
+        );
+
+        // Act
+        const result = await arc42StatusHandler({}, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        const sections = result.data.sections as Record<string, { metadata: { title: string } }>;
+        // German title for section 1
+        expect(sections['01_introduction_and_goals'].metadata.title).toContain('Einführung');
+      });
+
+      it('should handle invalid language in config gracefully', async () => {
+        // Arrange
+        await mkdir(context.workspaceRoot, { recursive: true });
+        await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
+        await writeFile(
+          join(context.workspaceRoot, 'config.yaml'),
+          'projectName: test\nlanguage: INVALID\n'
+        );
+
+        // Act
+        const result = await arc42StatusHandler({}, context);
+
+        // Assert - should fallback to EN
+        expect(result.success).toBe(true);
+        expect(result.data.language.code).toBe('EN');
+      });
+
+      it('should read projectName from config.yaml', async () => {
+        // Arrange
+        await mkdir(context.workspaceRoot, { recursive: true });
+        await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
+        await writeFile(
+          join(context.workspaceRoot, 'config.yaml'),
+          'projectName: my-project\nlanguage: EN\n'
+        );
+
+        // Act
+        const result = await arc42StatusHandler({}, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.projectName).toBe('my-project');
+      });
     });
   });
 });

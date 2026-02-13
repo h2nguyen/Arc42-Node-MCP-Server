@@ -5,7 +5,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFile, mkdir, readFile } from 'fs/promises';
 import { join } from 'path';
-import { updateSectionHandler, updateSectionTool } from '../../tools/update-section.js';
+import { updateSectionHandler, updateSectionInputSchema, updateSectionDescription } from '../../tools/update-section.js';
 import { createTestContext, createInitializedWorkspace, ALL_SECTIONS } from '../fixtures/test-helpers.js';
 import type { ToolContext } from '../../types.js';
 
@@ -23,33 +23,37 @@ describe('update-section', () => {
     cleanup();
   });
 
-  describe('updateSectionTool definition', () => {
-    it('should have correct tool name', () => {
-      expect(updateSectionTool.name).toBe('update-section');
-    });
-
+  describe('updateSection schema definition', () => {
     it('should have a descriptive description', () => {
-      expect(updateSectionTool.description).toContain('Update content');
-      expect(updateSectionTool.description).toContain('arc42');
+      expect(updateSectionDescription).toContain('Update content');
+      expect(updateSectionDescription).toContain('arc42');
     });
 
-    it('should require section and content parameters', () => {
-      expect(updateSectionTool.inputSchema.required).toContain('section');
-      expect(updateSectionTool.inputSchema.required).toContain('content');
+    it('should have section schema defined', () => {
+      expect(updateSectionInputSchema.section).toBeDefined();
+      // Verify it's a Zod enum with section values
+      const sectionOptions = updateSectionInputSchema.section._def.values;
+      expect(sectionOptions).toHaveLength(12);
+      ALL_SECTIONS.forEach(section => {
+        expect(sectionOptions).toContain(section);
+      });
+    });
+
+    it('should have content schema defined as string', () => {
+      expect(updateSectionInputSchema.content).toBeDefined();
+      expect(updateSectionInputSchema.content._def.typeName).toBe('ZodString');
     });
 
     it('should have mode parameter with replace and append options', () => {
-      const properties = updateSectionTool.inputSchema.properties as Record<string, { enum?: string[] }>;
-      expect(properties.mode.enum).toContain('replace');
-      expect(properties.mode.enum).toContain('append');
+      expect(updateSectionInputSchema.mode).toBeDefined();
+      const modeOptions = updateSectionInputSchema.mode._def.innerType._def.values;
+      expect(modeOptions).toContain('replace');
+      expect(modeOptions).toContain('append');
     });
 
-    it('should list all 12 sections in enum', () => {
-      const properties = updateSectionTool.inputSchema.properties as Record<string, { enum?: string[] }>;
-      expect(properties.section.enum).toHaveLength(12);
-      ALL_SECTIONS.forEach(section => {
-        expect(properties.section.enum).toContain(section);
-      });
+    it('should have optional targetFolder parameter', () => {
+      expect(updateSectionInputSchema.targetFolder).toBeDefined();
+      expect(updateSectionInputSchema.targetFolder.isOptional()).toBe(true);
     });
   });
 
@@ -199,7 +203,7 @@ describe('update-section', () => {
 
     it('should work with targetFolder parameter', async () => {
       const { context: customContext, cleanup: customCleanup } = createInitializedWorkspace();
-      
+
       try {
         const result = await updateSectionHandler({
           section: '07_deployment_view',
