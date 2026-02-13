@@ -868,3 +868,7 @@ This project is licensed under the Apache License 2.0 – see the [LICENSE](LICE
 
 [![arc42](https://img.shields.io/badge/template-arc42-orange.svg)](https://arc42.org/)
 [![MCP](https://img.shields.io/badge/protocol-MCP-blue.svg)](https://modelcontextprotocol.io/)
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=h2nguyen/Arc42-Node-MCP-Server&type=date&legend=top-left)](https://www.star-history.com/#h2nguyen/Arc42-Node-MCP-Server&type=date&legend=top-left)
