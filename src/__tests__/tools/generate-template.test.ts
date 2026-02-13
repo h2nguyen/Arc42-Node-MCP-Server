@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { generateTemplateHandler, generateTemplateTool } from '../../tools/generate-template.js';
+import { generateTemplateHandler, generateTemplateInputSchema, generateTemplateDescription } from '../../tools/generate-template.js';
 import { createTestContext, ALL_SECTIONS } from '../fixtures/test-helpers.js';
 import type { ToolContext } from '../../types.js';
 
@@ -21,26 +21,31 @@ describe('generate-template', () => {
     cleanup();
   });
 
-  describe('generateTemplateTool definition', () => {
-    it('should have correct tool name', () => {
-      expect(generateTemplateTool.name).toBe('generate-template');
-    });
-
+  describe('generateTemplate schema definition', () => {
     it('should have a descriptive description', () => {
-      expect(generateTemplateTool.description).toContain('template');
-      expect(generateTemplateTool.description).toContain('arc42');
+      expect(generateTemplateDescription).toContain('template');
+      expect(generateTemplateDescription).toContain('arc42');
     });
 
-    it('should require section parameter', () => {
-      expect(generateTemplateTool.inputSchema.required).toContain('section');
-    });
-
-    it('should list all 12 sections in enum', () => {
-      const properties = generateTemplateTool.inputSchema.properties as Record<string, { enum?: string[] }>;
-      expect(properties.section.enum).toHaveLength(12);
+    it('should have section parameter with all 12 sections', () => {
+      expect(generateTemplateInputSchema.section).toBeDefined();
+      const sectionOptions = generateTemplateInputSchema.section._def.values;
+      expect(sectionOptions).toHaveLength(12);
       ALL_SECTIONS.forEach(section => {
-        expect(properties.section.enum).toContain(section);
+        expect(sectionOptions).toContain(section);
       });
+    });
+
+    it('should have optional language parameter with enum values', () => {
+      expect(generateTemplateInputSchema.language).toBeDefined();
+      expect(generateTemplateInputSchema.language.isOptional()).toBe(true);
+      // Check the enum values - schema is ZodDefault<ZodOptional<ZodEnum>>
+      // Navigate through: default -> optional -> enum
+      const optionalType = generateTemplateInputSchema.language._def.innerType;
+      const enumType = optionalType._def.innerType;
+      const languageOptions = enumType._def.values;
+      expect(languageOptions).toContain('EN');
+      expect(languageOptions).toContain('DE');
     });
   });
 
@@ -242,6 +247,97 @@ describe('generate-template', () => {
         expect(result.message).toBeDefined();
         expect(result.message).toContain('Failed to generate template');
       }
+    });
+
+    describe('language parameter handling', () => {
+      it('should default to EN when no language specified', async () => {
+        // Arrange & Act
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals'
+        }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.language).toBe('EN');
+      });
+
+      it('should accept valid language code', async () => {
+        // Arrange & Act
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals',
+          language: 'DE'
+        }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.language).toBe('DE');
+        expect(result.message).toContain('DE');
+      });
+
+      it('should return localized template for German', async () => {
+        // Arrange & Act
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals',
+          language: 'DE'
+        }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.metadata.title).toContain('Einführung');
+      });
+
+      it('should normalize lowercase language codes', async () => {
+        // Arrange & Act
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals',
+          language: 'de'
+        }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.language).toBe('DE');
+      });
+
+      it('should reject invalid language code', async () => {
+        // Arrange & Act
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals',
+          language: 'INVALID'
+        }, context);
+
+        // Assert
+        expect(result.success).toBe(false);
+        expect(result.message).toContain('Invalid language code');
+      });
+
+      it('should include languageCode in metadata', async () => {
+        // Arrange & Act
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals',
+          language: 'FR'
+        }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.metadata.languageCode).toBe('FR');
+      });
+
+      it.each(['EN', 'DE', 'ES', 'FR', 'IT', 'NL', 'PT', 'RU', 'CZ', 'UKR', 'ZH'])(
+        'should generate template in %s language',
+        async (langCode) => {
+          // Act
+          const result = await generateTemplateHandler({
+            section: '01_introduction_and_goals',
+            language: langCode
+          }, context);
+
+          // Assert
+          expect(result.success).toBe(true);
+          expect(result.data.language).toBe(langCode);
+          expect(result.data.template).toBeDefined();
+          expect(result.data.template.length).toBeGreaterThan(0);
+        }
+      );
     });
   });
 });

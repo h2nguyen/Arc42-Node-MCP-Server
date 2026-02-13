@@ -1,13 +1,13 @@
 /**
  * Tests for arc42-init tool
- * 
+ *
  * Tests workspace initialization functionality
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
-import { arc42InitHandler, arc42InitTool } from '../../tools/arc42-init.js';
+import { arc42InitHandler, arc42InitInputSchema, arc42InitDescription } from '../../tools/arc42-init.js';
 import { createTestContext, isWorkspaceInitialized, VALID_PROJECT_NAMES } from '../fixtures/test-helpers.js';
 import type { ToolContext } from '../../types.js';
 
@@ -25,25 +25,34 @@ describe('arc42-init', () => {
     cleanup();
   });
 
-  describe('arc42InitTool definition', () => {
-    it('should have correct tool name', () => {
-      expect(arc42InitTool.name).toBe('arc42-init');
-    });
-
+  describe('arc42Init schema definition', () => {
     it('should have a descriptive description', () => {
-      expect(arc42InitTool.description).toContain('Initialize');
-      expect(arc42InitTool.description).toContain('arc42');
-      expect(arc42InitTool.description?.length).toBeGreaterThan(50);
+      expect(arc42InitDescription).toContain('Initialize');
+      expect(arc42InitDescription).toContain('arc42');
+      expect(arc42InitDescription.length).toBeGreaterThan(50);
     });
 
-    it('should require projectName parameter', () => {
-      expect(arc42InitTool.inputSchema.required).toContain('projectName');
+    it('should have projectName schema defined as required string', () => {
+      expect(arc42InitInputSchema.projectName).toBeDefined();
+      expect(arc42InitInputSchema.projectName._def.typeName).toBe('ZodString');
     });
 
-    it('should have optional force parameter', () => {
-      const properties = arc42InitTool.inputSchema.properties as Record<string, { type: string }>;
-      expect(properties.force).toBeDefined();
-      expect(properties.force.type).toBe('boolean');
+    it('should have optional force parameter as boolean', () => {
+      expect(arc42InitInputSchema.force).toBeDefined();
+      expect(arc42InitInputSchema.force.isOptional()).toBe(true);
+    });
+
+    it('should have optional language parameter with enum values', () => {
+      expect(arc42InitInputSchema.language).toBeDefined();
+      expect(arc42InitInputSchema.language.isOptional()).toBe(true);
+      // Check the enum values - schema is ZodDefault<ZodOptional<ZodEnum>>
+      // Navigate through: default -> optional -> enum
+      const optionalType = arc42InitInputSchema.language._def.innerType;
+      const enumType = optionalType._def.innerType;
+      const languageOptions = enumType._def.values;
+      expect(languageOptions).toContain('EN');
+      expect(languageOptions).toContain('DE');
+      expect(languageOptions).toHaveLength(11);
     });
   });
 
@@ -71,12 +80,12 @@ describe('arc42-init', () => {
 
         const configPath = join(context.workspaceRoot, 'config.yaml');
         expect(existsSync(configPath)).toBe(true);
-        
+
         const configContent = readFileSync(configPath, 'utf-8');
         expect(configContent).toContain(`projectName: ${projectName}`);
         expect(configContent).toContain('version: 1.0.0');
         expect(configContent).toContain('format: markdown');
-        expect(configContent).toContain('language: en');
+        expect(configContent).toContain('language: EN');
         // Check for arc42 template reference info
         expect(configContent).toContain('arc42_template_version:');
         expect(configContent).toContain('arc42_template_date:');
@@ -88,7 +97,7 @@ describe('arc42-init', () => {
 
         const readmePath = join(context.workspaceRoot, 'README.md');
         expect(existsSync(readmePath)).toBe(true);
-        
+
         const readmeContent = readFileSync(readmePath, 'utf-8');
         expect(readmeContent).toContain('test-project');
         expect(readmeContent).toContain('Architecture Documentation');
@@ -99,7 +108,7 @@ describe('arc42-init', () => {
 
         const templatePath = join(context.workspaceRoot, 'arc42-template.md');
         expect(existsSync(templatePath)).toBe(true);
-        
+
         const templateContent = readFileSync(templatePath, 'utf-8');
         expect(templateContent).toContain('Table of Contents');
       });
@@ -131,7 +140,7 @@ describe('arc42-init', () => {
       it('should work with various valid project names', async () => {
         for (const projectName of VALID_PROJECT_NAMES) {
           const { context: ctx, cleanup: cleanupCtx } = createTestContext();
-          
+
           try {
             const result = await arc42InitHandler({ projectName }, ctx);
             expect(result.success).toBe(true);
@@ -177,7 +186,7 @@ describe('arc42-init', () => {
       it('should fail when workspace already exists without force', async () => {
         // Initialize first
         await arc42InitHandler({ projectName: 'test-project' }, context);
-        
+
         // Try again without force
         const result = await arc42InitHandler({ projectName: 'test-project' }, context);
 
@@ -190,11 +199,11 @@ describe('arc42-init', () => {
       it('should allow re-initialization with force=true', async () => {
         // Initialize first
         await arc42InitHandler({ projectName: 'initial-project' }, context);
-        
+
         // Re-initialize with force
-        const result = await arc42InitHandler({ 
-          projectName: 'new-project', 
-          force: true 
+        const result = await arc42InitHandler({
+          projectName: 'new-project',
+          force: true
         }, context);
 
         expect(result.success).toBe(true);
@@ -211,6 +220,100 @@ describe('arc42-init', () => {
         );
         expect(configContent).toContain('projectName: new-project');
       });
+    });
+
+    describe('language parameter handling', () => {
+      it('should default to EN when no language specified', async () => {
+        // Arrange & Act
+        const result = await arc42InitHandler({ projectName: 'test-project' }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        const configContent = readFileSync(join(context.workspaceRoot, 'config.yaml'), 'utf-8');
+        expect(configContent).toContain('language: EN');
+      });
+
+      it('should accept valid language code', async () => {
+        // Arrange & Act
+        const result = await arc42InitHandler({ projectName: 'test-project', language: 'DE' }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.message).toContain('DE');
+        expect(result.data.language).toBe('DE');
+      });
+
+      it('should save language to config.yaml', async () => {
+        // Arrange & Act
+        await arc42InitHandler({ projectName: 'test-project', language: 'FR' }, context);
+
+        // Assert
+        const configContent = readFileSync(join(context.workspaceRoot, 'config.yaml'), 'utf-8');
+        expect(configContent).toContain('language: FR');
+      });
+
+      it('should normalize lowercase language codes to uppercase', async () => {
+        // Arrange & Act
+        const result = await arc42InitHandler({ projectName: 'test-project', language: 'de' }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.language).toBe('DE');
+        const configContent = readFileSync(join(context.workspaceRoot, 'config.yaml'), 'utf-8');
+        expect(configContent).toContain('language: DE');
+      });
+
+      it('should reject invalid language code', async () => {
+        // Arrange & Act
+        const result = await arc42InitHandler({ projectName: 'test-project', language: 'INVALID' }, context);
+
+        // Assert
+        expect(result.success).toBe(false);
+        expect(result.message).toContain('Invalid language code');
+        expect(result.message).toContain('Supported');
+      });
+
+      it('should create localized section titles for German', async () => {
+        // Arrange & Act
+        await arc42InitHandler({ projectName: 'test-project', language: 'DE' }, context);
+
+        // Assert - German section title
+        const sectionContent = readFileSync(
+          join(context.workspaceRoot, 'sections', '01_introduction_and_goals.md'),
+          'utf-8'
+        );
+        expect(sectionContent).toContain('Einführung und Ziele');
+      });
+
+      it('should create localized README for specified language', async () => {
+        // Arrange & Act
+        await arc42InitHandler({ projectName: 'test-project', language: 'DE' }, context);
+
+        // Assert - German README
+        const readmeContent = readFileSync(join(context.workspaceRoot, 'README.md'), 'utf-8');
+        expect(readmeContent).toContain('test-project');
+        // German README should have German content
+        expect(readmeContent).toContain('Architektur');
+      });
+
+      it.each(['EN', 'DE', 'ES', 'FR', 'IT', 'NL', 'PT', 'RU', 'CZ', 'UKR', 'ZH'])(
+        'should accept language code %s',
+        async (langCode) => {
+          // Arrange
+          const { context: ctx, cleanup: cleanupCtx } = createTestContext();
+
+          try {
+            // Act
+            const result = await arc42InitHandler({ projectName: 'test-project', language: langCode }, ctx);
+
+            // Assert
+            expect(result.success).toBe(true);
+            expect(result.data.language).toBe(langCode);
+          } finally {
+            cleanupCtx();
+          }
+        }
+      );
     });
 
   });

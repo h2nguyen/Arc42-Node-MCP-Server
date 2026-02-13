@@ -5,8 +5,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
-import { getSectionHandler, getSectionTool } from '../../tools/get-section.js';
-import { createTestContext } from '../fixtures/test-helpers.js';
+import { getSectionHandler, getSectionInputSchema, getSectionDescription } from '../../tools/get-section.js';
+import { createTestContext, ALL_SECTIONS } from '../fixtures/test-helpers.js';
 import type { ToolContext } from '../../types.js';
 
 describe('get-section', () => {
@@ -23,18 +23,24 @@ describe('get-section', () => {
     cleanup();
   });
 
-  describe('getSectionTool definition', () => {
-    it('should have correct tool name', () => {
-      expect(getSectionTool.name).toBe('get-section');
-    });
-
+  describe('getSection schema definition', () => {
     it('should have a descriptive description', () => {
-      expect(getSectionTool.description).toContain('Read content');
-      expect(getSectionTool.description).toContain('arc42');
+      expect(getSectionDescription).toContain('Read content');
+      expect(getSectionDescription).toContain('arc42');
     });
 
-    it('should require section parameter', () => {
-      expect(getSectionTool.inputSchema.required).toContain('section');
+    it('should have section parameter with all 12 sections', () => {
+      expect(getSectionInputSchema.section).toBeDefined();
+      const sectionOptions = getSectionInputSchema.section._def.values;
+      expect(sectionOptions).toHaveLength(12);
+      ALL_SECTIONS.forEach(section => {
+        expect(sectionOptions).toContain(section);
+      });
+    });
+
+    it('should have optional targetFolder parameter', () => {
+      expect(getSectionInputSchema.targetFolder).toBeDefined();
+      expect(getSectionInputSchema.targetFolder.isOptional()).toBe(true);
     });
   });
 
@@ -59,11 +65,11 @@ describe('get-section', () => {
       // Initialize workspace and create a section file
       await mkdir(context.workspaceRoot, { recursive: true });
       await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
-      
+
       const sectionName = '01_introduction_and_goals';
       const sectionPath = join(context.workspaceRoot, 'sections', `${sectionName}.md`);
       const testContent = '# Introduction and Goals\n\nThis is a test content.';
-      
+
       await writeFile(sectionPath, testContent);
 
       const result = await getSectionHandler({ section: sectionName }, context);
@@ -78,10 +84,10 @@ describe('get-section', () => {
     it('should return 0 word count for empty file', async () => {
       await mkdir(context.workspaceRoot, { recursive: true });
       await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
-      
+
       const sectionName = '02_architecture_constraints';
       const sectionPath = join(context.workspaceRoot, 'sections', `${sectionName}.md`);
-      
+
       await writeFile(sectionPath, '');
 
       const result = await getSectionHandler({ section: sectionName }, context);

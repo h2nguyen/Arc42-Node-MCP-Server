@@ -5,6 +5,31 @@ All notable changes to the arc42 MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Multi-Language Template Support**: Documentation templates now available in 11 languages
+  - Supported languages: EN (English), DE (German), ES (Spanish), FR (French), IT (Italian), NL (Dutch), PT (Portuguese), RU (Russian), CZ (Czech), UKR (Ukrainian), ZH (Chinese)
+  - Language parameter added to `arc42-init`, `generate-template`, and `arc42-workflow-guide` tools
+  - Language configuration stored in `config.yaml` for project-level default
+  - Localized section titles, descriptions, and template content
+  - Localized README content when initializing workspace
+  - Localized workflow guides for each language
+
+### Changed
+- `arc42-init` now accepts optional `language` parameter (defaults to EN)
+- `generate-template` now accepts optional `language` parameter (defaults to EN)
+- `arc42-workflow-guide` now accepts optional `language` parameter (defaults to EN)
+- `arc42-status` now displays configured language and available languages
+- `get-section` now displays localized section metadata based on config.yaml language
+
+### Architecture
+- Added Strategy Pattern for language implementations (`LanguageStrategy` interface)
+- Added Registry Pattern for language storage (`LanguageRegistry` class)
+- Added Factory Pattern for language creation (`LanguageFactory` class)
+- Added Facade Pattern for simplified access (`LocalizedTemplateProvider` class)
+- All 11 languages follow S.O.L.I.D principles with LSP-compliant substitutability
+
 ## [1.0.3] - 2026-02-12
 
 ### Fixed

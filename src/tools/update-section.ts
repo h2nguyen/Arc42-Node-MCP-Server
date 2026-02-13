@@ -1,55 +1,24 @@
-import { Tool } from '@modelcontextprotocol/sdk/types.js';
-import { ToolContext, ToolResponse, Arc42Section, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
+import { z } from 'zod';
+import { ToolContext, ToolResponse, Arc42Section, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
 import { existsSync } from 'fs';
 import { writeFile, readFile } from 'fs/promises';
 import { join } from 'path';
 
-export const updateSectionTool: Tool = {
-  name: 'update-section',
-  description: `Update content in a specific arc42 section.
+// Zod schema as the SINGLE SOURCE OF TRUTH for tool input
+const sectionValues = ARC42_SECTIONS as unknown as [Arc42Section, ...Arc42Section[]];
+
+export const updateSectionInputSchema = {
+  section: z.enum(sectionValues).describe('The section to update (e.g., "01_introduction_and_goals")'),
+  content: z.string().describe('The markdown content to write to the section'),
+  mode: z.enum(['replace', 'append']).optional().describe('Write mode: "replace" (default) or "append"'),
+  targetFolder: z.string().optional().describe('Optional: Absolute path to the target folder containing arc42-docs. If not provided, uses the default workspace configured at server startup.')
+};
+
+export const updateSectionDescription = `Update content in a specific arc42 section.
 
 This tool allows you to add or update content in any of the 12 arc42 sections. The content will be written to the appropriate section file while preserving the overall structure.
 
-You can optionally specify a targetFolder to update documentation in a specific directory instead of the default workspace.`,
-  inputSchema: {
-    type: 'object',
-    properties: {
-      section: {
-        type: 'string',
-        description: 'The section to update (e.g., "01_introduction_and_goals")',
-        enum: [
-          '01_introduction_and_goals',
-          '02_architecture_constraints',
-          '03_context_and_scope',
-          '04_solution_strategy',
-          '05_building_block_view',
-          '06_runtime_view',
-          '07_deployment_view',
-          '08_concepts',
-          '09_architecture_decisions',
-          '10_quality_requirements',
-          '11_technical_risks',
-          '12_glossary'
-        ]
-      },
-      content: {
-        type: 'string',
-        description: 'The markdown content to write to the section'
-      },
-      mode: {
-        type: 'string',
-        description: 'Write mode: "replace" (default) or "append"',
-        enum: ['replace', 'append'],
-        default: 'replace'
-      },
-      targetFolder: {
-        type: 'string',
-        description: 'Optional: Absolute path to the target folder containing arc42-docs. If not provided, uses the default workspace configured at server startup.'
-      }
-    },
-    required: ['section', 'content']
-  }
-};
+You can optionally specify a targetFolder to update documentation in a specific directory instead of the default workspace.`;
 
 export async function updateSectionHandler(
   args: Record<string, unknown>,

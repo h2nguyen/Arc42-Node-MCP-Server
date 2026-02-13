@@ -1,27 +1,49 @@
-import { Tool } from '@modelcontextprotocol/sdk/types.js';
 import { ToolContext, ToolResponse, MCPToolResponse, toMCPResponse } from '../types.js';
 
-// Import tool definitions and handlers
-import { arc42WorkflowGuideTool, arc42WorkflowGuideHandler } from './arc42-workflow-guide.js';
-import { arc42InitTool, arc42InitHandler } from './arc42-init.js';
-import { arc42StatusTool, arc42StatusHandler } from './arc42-status.js';
-import { updateSectionTool, updateSectionHandler } from './update-section.js';
-import { getSectionTool, getSectionHandler } from './get-section.js';
-import { generateTemplateTool, generateTemplateHandler } from './generate-template.js';
+// Re-export tool handlers and schemas (Single Source of Truth pattern)
+export {
+  arc42WorkflowGuideHandler,
+  arc42WorkflowGuideInputSchema,
+  arc42WorkflowGuideDescription
+} from './arc42-workflow-guide.js';
 
-/**
- * Register all available tools
- */
-export function registerTools(): Tool[] {
-  return [
-    arc42WorkflowGuideTool,
-    arc42InitTool,
-    arc42StatusTool,
-    updateSectionTool,
-    getSectionTool,
-    generateTemplateTool
-  ];
-}
+export {
+  arc42InitHandler,
+  arc42InitInputSchema,
+  arc42InitDescription
+} from './arc42-init.js';
+
+export {
+  arc42StatusHandler,
+  arc42StatusInputSchema,
+  arc42StatusDescription
+} from './arc42-status.js';
+
+export {
+  updateSectionHandler,
+  updateSectionInputSchema,
+  updateSectionDescription
+} from './update-section.js';
+
+export {
+  getSectionHandler,
+  getSectionInputSchema,
+  getSectionDescription
+} from './get-section.js';
+
+export {
+  generateTemplateHandler,
+  generateTemplateInputSchema,
+  generateTemplateDescription
+} from './generate-template.js';
+
+// Import handlers for handleToolCall function
+import { arc42WorkflowGuideHandler } from './arc42-workflow-guide.js';
+import { arc42InitHandler } from './arc42-init.js';
+import { arc42StatusHandler } from './arc42-status.js';
+import { updateSectionHandler } from './update-section.js';
+import { getSectionHandler } from './get-section.js';
+import { generateTemplateHandler } from './generate-template.js';
 
 /**
  * Handle tool invocation

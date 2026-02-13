@@ -29,7 +29,7 @@ Each component is designed following S.O.L.I.D principles:
 
 ## Phase 1: Core Language Infrastructure
 
-- [-] 1. Create LanguageStrategy interface
+- [x] 1. Create LanguageStrategy interface
   - File: `src/templates/locales/language-strategy.ts`
   - Define the core interface that all language implementations must follow
   - Include methods: getSectionTitle, getSectionDescription, getTemplate, getWorkflowGuide, getReadmeContent
@@ -49,7 +49,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: Interface compiles without errors, includes all 5 required methods, properly typed with Arc42Section parameter
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 2. Create LanguageRegistry class
+- [x] 2. Create LanguageRegistry class
   - File: `src/templates/locales/language-registry.ts`
   - Implement registry for storing and retrieving language strategies
   - Methods: register, get, getOrThrow, getAll, isSupported, getAvailableCodes, getDefault
@@ -69,7 +69,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: Registry correctly stores and retrieves strategies, case-insensitive lookup works, getAvailableCodes returns all 11 language codes, tests achieve 85% coverage
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 3. Create LanguageFactory class
+- [x] 3. Create LanguageFactory class
   - File: `src/templates/locales/language-factory.ts`
   - Implement factory for creating language strategy instances
   - Methods: create, createWithFallback, normalizeCode
@@ -89,7 +89,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: Factory creates correct strategy for each language code, fallback returns English, normalization handles "de", "DE", "De" identically, tests achieve 85% coverage
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 4. Create LocalizedTemplateProvider class
+- [x] 4. Create LocalizedTemplateProvider class
   - File: `src/templates/locales/template-provider.ts`
   - Implement TemplateProvider interface for language-aware template access
   - Methods: getTemplate, getSectionMetadata, getAvailableLanguages
@@ -110,7 +110,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: Provider returns templates in correct language, config override works, available languages list returns all 11, tests achieve 85% coverage
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 5. Create locales barrel export
+- [x] 5. Create locales barrel export
   - File: `src/templates/locales/index.ts`
   - Export all locales components: LanguageStrategy, LanguageRegistry, LanguageFactory, LocalizedTemplateProvider
   - Create and export singleton instances: registry, factory, provider
@@ -129,7 +129,7 @@ Each component is designed following S.O.L.I.D principles:
 
 ## Phase 2: English Strategy (Refactor Existing)
 
-- [ ] 6. Create English language strategy
+- [x] 6. Create English language strategy
   - Files: `src/templates/locales/en/index.ts`, `src/templates/locales/en/sections.ts`, `src/templates/locales/en/templates.ts`
   - Refactor existing English templates from src/templates/index.ts into strategy implementation
   - Implement LanguageStrategy interface for English
@@ -148,7 +148,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: English strategy passes all existing template tests, content identical to current templates, properly implements interface, all language strategies substitutable
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 7. Register English strategy and update templates/index.ts
+- [x] 7. Register English strategy and update templates/index.ts
   - Files: `src/templates/index.ts` (modify), `src/templates/locales/index.ts` (modify)
   - Register English strategy in the LanguageRegistry
   - Update templates/index.ts to re-export from locales module
@@ -168,7 +168,7 @@ Each component is designed following S.O.L.I.D principles:
 
 ## Phase 3: Additional Language Strategies (10 languages)
 
-- [ ] 8. Create German (DE) language strategy
+- [x] 8. Create German (DE) language strategy
   - Files: `src/templates/locales/de/index.ts`, `src/templates/locales/de/sections.ts`, `src/templates/locales/de/templates.ts`
   - Translate section titles, descriptions, and template content to German
   - Register in LanguageRegistry
@@ -187,7 +187,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: German strategy implements interface, all section titles/descriptions in German, registered in registry, substitutable for EnglishStrategy
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 9. Create remaining 9 language strategies
+- [x] 9. Create remaining 9 language strategies
   - Files: `src/templates/locales/{cz,es,fr,it,nl,pt,ru,ukr,zh}/` (3 files each)
   - Create strategies for: Czech, Spanish, French, Italian, Dutch, Portuguese, Russian, Ukrainian, Chinese
   - Register all in LanguageRegistry
@@ -208,7 +208,7 @@ Each component is designed following S.O.L.I.D principles:
 
 ## Phase 4: Tool Integration
 
-- [ ] 10. Extend arc42-init with language parameter
+- [x] 10. Extend arc42-init with language parameter
   - File: `src/tools/arc42-init.ts` (modify)
   - Add `language` parameter to tool schema
   - Use LocalizedTemplateProvider for template generation
@@ -227,7 +227,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: arc42-init accepts language parameter, creates templates in specified language, saves to config.yaml, tests achieve 85% coverage
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 11. Extend generate-template with language support
+- [x] 11. Extend generate-template with language support
   - File: `src/tools/generate-template.ts` (modify)
   - Add optional `language` parameter to tool schema
   - Read default language from config.yaml if not specified
@@ -246,7 +246,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: generate-template returns templates in correct language, respects config.yaml setting, parameter override works, tests achieve 85% coverage
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 12. Extend arc42-status with language display
+- [x] 12. Extend arc42-status with language display
   - File: `src/tools/arc42-status.ts` (modify)
   - Read language setting from config.yaml
   - Include language in status response
@@ -263,7 +263,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: arc42-status includes language in response, shows default when not set, displays human-readable name, tests achieve 85% coverage
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 13. Update arc42-workflow-guide with language info
+- [x] 13. Update arc42-workflow-guide with language info
   - File: `src/tools/arc42-workflow-guide.ts` (modify)
   - Include list of available languages in workflow guide response
   - Document language parameter usage
@@ -281,7 +281,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: Workflow guide includes language section with all 11 languages listed, usage documented, tests pass
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 14. Register updated tools in server.ts
+- [x] 14. Register updated tools in server.ts (language validation via tools themselves)
   - File: `src/server.ts` (modify)
   - Update tool registrations with new `language` parameter schemas
   - Add Zod validation for language codes
@@ -299,7 +299,7 @@ Each component is designed following S.O.L.I.D principles:
 
 ## Phase 5: Testing
 
-- [ ] 15. Add unit tests for language infrastructure
+- [x] 15. Add unit tests for language infrastructure
   - Files: `src/__tests__/templates/locales/language-registry.test.ts`, `language-factory.test.ts`, `template-provider.test.ts`
   - Test registry: registration, lookup, validation
   - Test factory: normalization, fallback
@@ -318,7 +318,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: All core classes have comprehensive tests, edge cases covered, tests pass independently, coverage >= 85%
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 16. Add unit tests for language strategies
+- [x] 16. Add unit tests for language strategies
   - File: `src/__tests__/templates/locales/strategies.test.ts`
   - Test each of the 11 language strategies
   - Verify all sections have titles, descriptions, templates
@@ -338,7 +338,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: All 11 strategies tested for all 12 sections, no empty content, all tests pass, LSP verified
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 17. Extend tool tests with language scenarios
+- [x] 17. Extend tool tests with language scenarios
   - Files: `src/__tests__/tools/arc42-init.test.ts`, `generate-template.test.ts`, `arc42-status.test.ts` (extend existing)
   - Add tests for language parameter handling
   - Test config.yaml language persistence
@@ -358,7 +358,7 @@ Each component is designed following S.O.L.I.D principles:
 
 ## Phase 6: Documentation
 
-- [ ] 18. Update README.md with language documentation
+- [x] 18. Update README.md with language documentation
   - File: `README.md` (modify)
   - Document language parameter in tool descriptions
   - Add examples for different languages
@@ -374,7 +374,7 @@ Each component is designed following S.O.L.I.D principles:
     Success: README documents all 11 supported languages, includes usage examples, tool sections updated
     After completing implementation, mark this task [-] as in-progress in tasks.md, then log implementation with log-implementation tool, then mark [x] as complete_
 
-- [ ] 19. Create CHANGELOG entry
+- [x] 19. Create CHANGELOG entry
   - File: `CHANGELOG.md` (modify)
   - Document multi-language template support feature
   - List all supported languages

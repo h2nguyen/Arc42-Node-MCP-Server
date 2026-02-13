@@ -165,32 +165,92 @@ All code in this project SHALL adhere to the S.O.L.I.D principles:
 - Use dependency injection for testability
 - **Example**: `arc42-init` depends on `TemplateProvider` interface, not `LocalizedTemplateProvider` directly
 
+### DRY (Don't Repeat Yourself)
+
+All code in this project SHALL follow the DRY principle to reduce duplication and improve maintainability:
+
+#### Core Concept
+- Every piece of knowledge SHALL have a single, unambiguous, authoritative representation within a system
+- Code duplication leads to inconsistencies, bugs, and maintenance burden
+- When the same logic exists in multiple places, changes must be made everywhere (error-prone)
+
+#### DRY Guidelines
+
+| Guideline                   | Description                                                     | Example                                                   |
+|-----------------------------|-----------------------------------------------------------------|-----------------------------------------------------------|
+| **Single Source of Truth**  | Define data/logic in one place, reference it elsewhere          | Zod schemas defined in tool files, imported by server.ts  |
+| **Extract Common Logic**    | Identify repeated code patterns and extract to shared functions | `getErrorMessage()` utility for consistent error handling |
+| **Use Constants**           | Define magic values once as named constants                     | `SUPPORTED_LANGUAGE_CODES`, `ARC42_SECTIONS`              |
+| **Parameterize Variations** | Use parameters instead of duplicating similar code              | Language strategies with configurable templates           |
+
+#### DRY in Practice
+
+**✅ Good - Single Source of Truth:**
+```typescript
+// Tool file defines schema once
+export const arc42InitInputSchema = {
+  projectName: z.string().describe('...'),
+  language: z.enum(languageValues).optional().default('EN')
+};
+
+// Server imports and uses the same schema
+import { arc42InitInputSchema } from './tools/arc42-init.js';
+this.mcpServer.registerTool('arc42-init', {
+  inputSchema: arc42InitInputSchema  // References single source
+}, handler);
+```
+
+**❌ Bad - Duplicated Definitions:**
+```typescript
+// Tool file has one schema
+const toolSchema = { projectName: z.string() };
+
+// Server has duplicate schema (will get out of sync!)
+const serverSchema = { projectName: z.string() };  // DUPLICATE!
+```
+
+#### When NOT to Apply DRY
+
+DRY should not be applied blindly. Avoid premature abstraction:
+
+- **Coincidental similarity**: Two pieces of code that look similar but serve different purposes may evolve differently
+- **Over-abstraction**: Creating complex abstractions for simple one-time operations adds unnecessary complexity
+- **Readability cost**: Sometimes a small amount of duplication is more readable than a complex shared abstraction
+
+#### DRY Checklist
+
+When writing new code:
+- [ ] Is this logic already implemented elsewhere?
+- [ ] Can I extract this into a shared utility/constant?
+- [ ] If I change this, will I need to change it in multiple places?
+- [ ] Is the abstraction worth the added complexity?
+
 ### Design Patterns
 
 The project SHALL use established design patterns for maintainability, testability, and extensibility:
 
 #### Creational Patterns
 
-| Pattern | Use Case | Implementation |
-|---------|----------|----------------|
-| **Factory** | Creating language strategy instances | `LanguageFactory` creates strategies with normalization and fallback |
-| **Singleton** | Global registry and factory instances | Registry, Factory, Provider as module-level singletons |
+| Pattern       | Use Case                              | Implementation                                                       |
+|---------------|---------------------------------------|----------------------------------------------------------------------|
+| **Factory**   | Creating language strategy instances  | `LanguageFactory` creates strategies with normalization and fallback |
+| **Singleton** | Global registry and factory instances | Registry, Factory, Provider as module-level singletons               |
 
 #### Structural Patterns
 
-| Pattern | Use Case | Implementation |
-|---------|----------|----------------|
-| **Facade** | Simplified template access | `LocalizedTemplateProvider` facades complex language/config logic |
-| **Adapter** | Wrapping external dependencies | Config reading adapts YAML library to internal interfaces |
+| Pattern     | Use Case                       | Implementation                                                    |
+|-------------|--------------------------------|-------------------------------------------------------------------|
+| **Facade**  | Simplified template access     | `LocalizedTemplateProvider` facades complex language/config logic |
+| **Adapter** | Wrapping external dependencies | Config reading adapts YAML library to internal interfaces         |
 
 #### Behavioral Patterns
 
-| Pattern | Use Case | Implementation |
-|---------|----------|----------------|
-| **Strategy** | Interchangeable language implementations | Each language is a `LanguageStrategy` implementation |
-| **Registry** | Language catalog and discovery | `LanguageRegistry` maintains available languages |
-| **Template Method** | Common tool handler structure | Base patterns for request validation, processing, response |
-| **Observer** | Future: File change notifications | Chokidar integration for live updates |
+| Pattern             | Use Case                                 | Implementation                                             |
+|---------------------|------------------------------------------|------------------------------------------------------------|
+| **Strategy**        | Interchangeable language implementations | Each language is a `LanguageStrategy` implementation       |
+| **Registry**        | Language catalog and discovery           | `LanguageRegistry` maintains available languages           |
+| **Template Method** | Common tool handler structure            | Base patterns for request validation, processing, response |
+| **Observer**        | Future: File change notifications        | Chokidar integration for live updates                      |
 
 #### Pattern Selection Guidelines
 
@@ -261,11 +321,11 @@ graph LR
 
 #### Test Categories
 
-| Category | Purpose | Speed | Location |
-|----------|---------|-------|----------|
-| **Unit** | Test individual functions/classes | < 10ms | `src/__tests__/{module}/` |
-| **Integration** | Test module interactions | < 100ms | `src/__tests__/tools/` |
-| **E2E** | Test complete workflows | < 5s | `tests/e2e/` (future) |
+| Category        | Purpose                           | Speed   | Location                  |
+|-----------------|-----------------------------------|---------|---------------------------|
+| **Unit**        | Test individual functions/classes | < 10ms  | `src/__tests__/{module}/` |
+| **Integration** | Test module interactions          | < 100ms | `src/__tests__/tools/`    |
+| **E2E**         | Test complete workflows           | < 5s    | `tests/e2e/` (future)     |
 
 #### Test Structure (AAA Pattern)
 
@@ -296,12 +356,12 @@ describe('LanguageFactory', () => {
 
 #### Coverage Goals
 
-| Metric | Minimum | Target |
-|--------|---------|--------|
-| Statements | 70% | 85% |
-| Branches | 60% | 80% |
-| Functions | 70% | 85% |
-| Lines | 70% | 85% |
+| Metric     | Minimum | Target |
+|------------|---------|--------|
+| Statements | 70%     | 85%    |
+| Branches   | 60%     | 80%    |
+| Functions  | 70%     | 85%    |
+| Lines      | 70%     | 85%    |
 
 ### Code Quality Standards
 
@@ -312,17 +372,24 @@ describe('LanguageFactory', () => {
 - **No `any`**: Avoid `any`; use `unknown` with type guards instead
 - **Readonly**: Use `readonly` for immutable data
 - **Const Assertions**: Use `as const` for literal types
+- **Explicit Imports**: Use named imports instead of star imports (`import * as`)
+  - ✅ Good: `import { LanguageRegistry, LanguageFactory } from './templates/index.js';`
+  - ❌ Bad: `import * as templates from './templates/index.js';`
+- **Absolute Path Imports**: Prefer absolute paths over relative paths for better maintainability
+  - ✅ Good: `import { ToolContext } from '../types.js';` (from project root)
+  - ❌ Avoid: `import { ToolContext } from '../../../../../../types.js';` (deep relative paths)
+  - Configure `baseUrl` and `paths` in tsconfig.json for cleaner imports when needed
 
 #### Naming Conventions
 
-| Element | Convention | Example |
-|---------|------------|---------|
-| Interfaces | PascalCase, no "I" prefix | `LanguageStrategy` |
-| Types | PascalCase | `Arc42Section` |
-| Classes | PascalCase | `LanguageRegistry` |
-| Functions | camelCase | `createStrategy()` |
-| Constants | UPPER_SNAKE_CASE | `ARC42_SECTIONS` |
-| Files | kebab-case | `language-strategy.ts` |
+| Element    | Convention                | Example                |
+|------------|---------------------------|------------------------|
+| Interfaces | PascalCase, no "I" prefix | `LanguageStrategy`     |
+| Types      | PascalCase                | `Arc42Section`         |
+| Classes    | PascalCase                | `LanguageRegistry`     |
+| Functions  | camelCase                 | `createStrategy()`     |
+| Constants  | UPPER_SNAKE_CASE          | `ARC42_SECTIONS`       |
+| Files      | kebab-case                | `language-strategy.ts` |
 
 #### Error Handling
 

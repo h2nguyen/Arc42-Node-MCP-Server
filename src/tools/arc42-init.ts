@@ -1,39 +1,34 @@
-import { Tool } from '@modelcontextprotocol/sdk/types.js';
+import { z } from 'zod';
 import { ToolContext, ToolResponse, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
-import { ARC42_REFERENCE, getArc42ReferenceConfig } from '../templates/index.js';
+import {
+  ARC42_REFERENCE,
+  getArc42ReferenceConfig,
+  templateProvider,
+  SUPPORTED_LANGUAGE_CODES,
+  isLanguageCode,
+  normalizeLanguageCode
+} from '../templates/index.js';
 import { mkdir, writeFile } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 
-export const arc42InitTool: Tool = {
-  name: 'arc42-init',
-  description: `Initialize arc42 documentation workspace for a project.
+// Zod schema as the SINGLE SOURCE OF TRUTH for tool input
+const languageValues = SUPPORTED_LANGUAGE_CODES as unknown as [string, ...string[]];
+
+export const arc42InitInputSchema = {
+  projectName: z.string().describe('Name of the project being documented'),
+  force: z.boolean().optional().describe('Force re-initialization even if workspace exists'),
+  targetFolder: z.string().optional().describe('Optional: Absolute path to the target folder where arc42-docs will be created. If not provided, uses the default workspace configured at server startup.'),
+  language: z.enum(languageValues).optional().default('EN').describe('Language code for the documentation templates. Supported: EN (English), DE (German), ES (Spanish), FR (French), IT (Italian), NL (Dutch), PT (Portuguese), RU (Russian), CZ (Czech), UKR (Ukrainian), ZH (Chinese). Defaults to EN.')
+};
+
+export const arc42InitDescription = `Initialize arc42 documentation workspace for a project.
 
 This tool creates the complete directory structure and template files for arc42 architecture documentation. It sets up all 12 sections with templates, configuration files, and a main documentation file.
 
 Use this tool once at the beginning of your architecture documentation journey.
 
-You can optionally specify a targetFolder to create the documentation in a specific directory instead of the default workspace.`,
-  inputSchema: {
-    type: 'object',
-    properties: {
-      projectName: {
-        type: 'string',
-        description: 'Name of the project being documented'
-      },
-      force: {
-        type: 'boolean',
-        description: 'Force re-initialization even if workspace exists',
-        default: false
-      },
-      targetFolder: {
-        type: 'string',
-        description: 'Optional: Absolute path to the target folder where arc42-docs will be created. If not provided, uses the default workspace configured at server startup.'
-      }
-    },
-    required: ['projectName']
-  }
-};
+You can optionally specify a targetFolder to create the documentation in a specific directory instead of the default workspace.`;
 
 export async function arc42InitHandler(
   args: Record<string, unknown>,
@@ -42,11 +37,30 @@ export async function arc42InitHandler(
   const projectNameArg = args.projectName;
   const force = (args.force as boolean) ?? false;
   const targetFolder = args.targetFolder as string | undefined;
+  const languageArg = (args.language as string) ?? 'EN';
 
   if (typeof projectNameArg !== 'string' || !projectNameArg) {
     return {
       success: false,
       message: 'Project name is required'
+    };
+  }
+
+  // Validate and normalize language code
+  let language: string;
+  try {
+    const normalizedLanguage = normalizeLanguageCode(languageArg);
+    if (!isLanguageCode(normalizedLanguage)) {
+      return {
+        success: false,
+        message: `Unsupported language code: ${languageArg}. Supported languages: ${SUPPORTED_LANGUAGE_CODES.join(', ')}`
+      };
+    }
+    language = normalizedLanguage;
+  } catch {
+    return {
+      success: false,
+      message: `Invalid language code: ${languageArg}. Supported languages: ${SUPPORTED_LANGUAGE_CODES.join(', ')}`
     };
   }
 
@@ -77,7 +91,7 @@ export async function arc42InitHandler(
       version: '1.0.0',
       created: new Date().toISOString(),
       format: 'markdown',
-      language: 'en',
+      language: language,
       // Include arc42 template reference info
       ...arc42Ref
     };
@@ -89,7 +103,7 @@ projectName: ${projectName}
 version: ${config.version}
 created: ${config.created}
 format: ${config.format}
-language: ${config.language}
+language: ${language}
 
 # arc42 Template Reference
 # This documents which version of the arc42 template this documentation is based on.
@@ -100,16 +114,16 @@ arc42_template_commit: ${ARC42_REFERENCE.commitSha}
 `
     );
 
-    // Create README
+    // Create README with localized content
     await writeFile(
       join(workspaceRoot, 'README.md'),
-      getReadmeContent(projectName)
+      templateProvider.getReadmeContent(language, projectName)
     );
 
-    // Create main template file
+    // Create main template file with localized section titles
     await writeFile(
       join(workspaceRoot, 'arc42-template.md'),
-      getMainTemplateContent(projectName)
+      getMainTemplateContent(projectName, language)
     );
 
     // Create section files (we'll create empty templates for now)
@@ -129,18 +143,21 @@ arc42_template_commit: ${ARC42_REFERENCE.commitSha}
     ];
 
     for (const section of sections) {
+      // Get localized section metadata
+      const metadata = templateProvider.getSectionMetadata(section as import('../types.js').Arc42Section, language);
       await writeFile(
         join(workspaceRoot, 'sections', `${section}.md`),
-        `# ${section.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ')}\n\n<!-- Content will be generated here -->\n`
+        `# ${metadata.title}\n\n<!-- ${metadata.description} -->\n`
       );
     }
 
     return {
       success: true,
-      message: `arc42 workspace initialized successfully for project: ${projectName}`,
+      message: `arc42 workspace initialized successfully for project: ${projectName} (language: ${language})`,
       data: {
         workspaceRoot,
         projectName,
+        language,
         sectionsCreated: sections.length,
         config
       },
@@ -160,62 +177,36 @@ arc42_template_commit: ${ARC42_REFERENCE.commitSha}
   }
 }
 
-function getReadmeContent(projectName: string): string {
-  return `# ${projectName} - Architecture Documentation
-
-This directory contains the architecture documentation for ${projectName}, following the arc42 template.
-
-## Structure
-
-- \`sections/\` - Individual section markdown files (12 sections)
-- \`images/\` - Diagrams and images
-- \`arc42-template.md\` - Main combined documentation
-- \`config.yaml\` - Configuration
-
-## The 12 arc42 Sections
-
-1. **Introduction and Goals** - Requirements, quality goals, stakeholders
-2. **Architecture Constraints** - Technical and organizational constraints  
-3. **Context and Scope** - Business and technical context
-4. **Solution Strategy** - Fundamental decisions and strategies
-5. **Building Block View** - Static decomposition
-6. **Runtime View** - Dynamic behavior
-7. **Deployment View** - Infrastructure and deployment
-8. **Cross-cutting Concepts** - Overall regulations and approaches
-9. **Architecture Decisions** - Important decisions (ADRs)
-10. **Quality Requirements** - Quality tree and scenarios
-11. **Risks and Technical Debt** - Known problems and risks
-12. **Glossary** - Important terms
-
-## Getting Started
-
-1. Start with Section 1: Introduction and Goals
-2. Work through sections iteratively
-3. Use diagrams to illustrate concepts
-4. Keep it focused on decisions, not implementation details
-
-## Generating Documentation
-
-Use the MCP tools to:
-- Check status: \`arc42-status\`
-- Generate templates: \`generate-template\`
-- Update sections: \`update-section\`
-
-## Resources
-
-- [arc42 Website](https://arc42.org/)
-- [arc42 Documentation](https://docs.arc42.org/)
-- [arc42 Examples](https://arc42.org/examples)
-`;
-}
-
-function getMainTemplateContent(projectName: string): string {
+function getMainTemplateContent(projectName: string, language: string): string {
   const date = new Date().toISOString().split('T')[0];
+
+  // Get localized section titles for table of contents
+  const sections = [
+    '01_introduction_and_goals',
+    '02_architecture_constraints',
+    '03_context_and_scope',
+    '04_solution_strategy',
+    '05_building_block_view',
+    '06_runtime_view',
+    '07_deployment_view',
+    '08_concepts',
+    '09_architecture_decisions',
+    '10_quality_requirements',
+    '11_technical_risks',
+    '12_glossary'
+  ] as const;
+
+  const tocEntries = sections.map((section, index) => {
+    const metadata = templateProvider.getSectionMetadata(section, language);
+    return `${index + 1}. [${metadata.title}](sections/${section}.md)`;
+  }).join('\n');
+
   return `# ${projectName} - Architecture Documentation
 
-**Version**: 1.0.0  
-**Date**: ${date}  
+**Version**: 1.0.0
+**Date**: ${date}
 **Status**: Draft
+**Language**: ${language}
 
 ---
 
@@ -223,18 +214,7 @@ This document describes the architecture of ${projectName} following the arc42 t
 
 ## Table of Contents
 
-1. [Introduction and Goals](sections/01_introduction_and_goals.md)
-2. [Architecture Constraints](sections/02_architecture_constraints.md)
-3. [Context and Scope](sections/03_context_and_scope.md)
-4. [Solution Strategy](sections/04_solution_strategy.md)
-5. [Building Block View](sections/05_building_block_view.md)
-6. [Runtime View](sections/06_runtime_view.md)
-7. [Deployment View](sections/07_deployment_view.md)
-8. [Cross-cutting Concepts](sections/08_concepts.md)
-9. [Architecture Decisions](sections/09_architecture_decisions.md)
-10. [Quality Requirements](sections/10_quality_requirements.md)
-11. [Risks and Technical Debt](sections/11_technical_risks.md)
-12. [Glossary](sections/12_glossary.md)
+${tocEntries}
 
 ---
 
@@ -242,7 +222,7 @@ This document describes the architecture of ${projectName} following the arc42 t
 
 arc42, the template for documentation of software and system architectures, was created by Dr. Gernot Starke and Dr. Peter Hruschka.
 
-**Template Reference**: arc42 v${ARC42_REFERENCE.version} (${ARC42_REFERENCE.date})  
+**Template Reference**: arc42 v${ARC42_REFERENCE.version} (${ARC42_REFERENCE.date})
 **Source**: [${ARC42_REFERENCE.sourceRepo}](${ARC42_REFERENCE.sourceRepo})
 
 © We acknowledge that this document uses material from the arc42 architecture template, https://arc42.org. Created by Dr. Gernot Starke, Dr. Peter Hruschka and contributors.

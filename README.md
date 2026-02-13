@@ -32,6 +32,10 @@ A Model Context Protocol (MCP) server that helps you create comprehensive archit
   * [generate-template](#generate-template)
   * [update-section](#update-section)
   * [get-section](#get-section)
+* [🌍 Multi-Language Support](#-multi-language-support)
+  * [Supported Languages](#supported-languages)
+  * [Using Languages](#using-languages)
+  * [Language Configuration](#language-configuration)
 * [📚 The 12 arc42 Sections](#-the-12-arc42-sections)
 * [📖 Usage Examples](#-usage-examples)
   * [Example 1: Starting Fresh](#example-1-starting-fresh)
@@ -401,8 +405,9 @@ This is useful when:
 Load the complete arc42 documentation workflow guide with instructions for all 12 sections.
 
 ```typescript
-// No parameters required
-arc42-workflow-guide
+arc42-workflow-guide {
+  language?: "EN" | "DE" | "ES" | ...  // Optional: language code (default: EN)
+}
 ```
 
 ### arc42-init
@@ -411,6 +416,7 @@ Initialize arc42 documentation workspace for your project.
 ```typescript
 arc42-init {
   projectName: "Your Project Name",
+  language?: "EN",  // Optional: language for templates (default: EN)
   force?: false,  // Re-initialize even if exists
   targetFolder?: "/path/to/project"  // Optional: specify target directory
 }
@@ -423,6 +429,7 @@ Check the status of your documentation, including completion percentage and sect
 arc42-status {
   targetFolder?: "/path/to/project"  // Optional: specify target directory
 }
+// Returns: language info, available languages, and localized section titles
 ```
 
 ### generate-template
@@ -430,7 +437,8 @@ Generate a detailed template for any of the 12 arc42 sections.
 
 ```typescript
 generate-template {
-  section: "01_introduction_and_goals" | "02_architecture_constraints" | ...
+  section: "01_introduction_and_goals" | "02_architecture_constraints" | ...,
+  language?: "EN" | "DE" | "ES" | ...  // Optional: language code (default: EN)
 }
 ```
 
@@ -455,6 +463,67 @@ get-section {
   targetFolder?: "/path/to/project"  // Optional: specify target directory
 }
 ```
+
+## 🌍 Multi-Language Support
+
+This MCP server supports documentation templates in **11 languages**, matching the official arc42 template translations.
+
+### Supported Languages
+
+| Code | Language   | Native Name |
+|------|------------|-------------|
+| EN   | English    | English     |
+| DE   | German     | Deutsch     |
+| ES   | Spanish    | Español     |
+| FR   | French     | Français    |
+| IT   | Italian    | Italiano    |
+| NL   | Dutch      | Nederlands  |
+| PT   | Portuguese | Português   |
+| RU   | Russian    | Русский     |
+| CZ   | Czech      | Čeština     |
+| UKR  | Ukrainian  | Українська  |
+| ZH   | Chinese    | 中文          |
+
+### Using Languages
+
+**Initialize with a specific language:**
+
+```typescript
+arc42-init {
+  projectName: "Mein Projekt",
+  language: "DE"  // German templates and section titles
+}
+```
+
+**Generate templates in a specific language:**
+
+```typescript
+generate-template {
+  section: "01_introduction_and_goals",
+  language: "FR"  // French template
+}
+```
+
+**Get workflow guide in a specific language:**
+
+```typescript
+arc42-workflow-guide {
+  language: "ES"  // Spanish guide
+}
+```
+
+### Language Configuration
+
+The language is stored in `config.yaml` when you initialize a workspace:
+
+```yaml
+projectName: My Project
+language: DE
+```
+
+- `arc42-status` reads and displays the configured language
+- Templates and section titles are localized based on this setting
+- Language codes are case-insensitive (`de`, `DE`, `De` all work)
 
 ## 📚 The 12 arc42 Sections
 
