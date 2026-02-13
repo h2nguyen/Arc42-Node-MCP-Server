@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/multi-language-templates/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-02-12T20:38:59.264Z",
+      "trigger": "initial",
+      "approvalId": "approval_1770928739245_s2e2pv5ca",
+      "approvalTitle": "Design: Multi-Language Template Support"
+    }
+  ]
+}
