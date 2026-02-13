@@ -628,6 +628,16 @@ your-project/
 
 ## 🔧 Development
 
+### Development Methodology
+
+This project is developed using **Spec Driven Development (SDD)**, a methodology that emphasizes creating detailed specifications before implementation. Features are planned, documented, and approved through a structured workflow before any code is written.
+
+The SDD workflow is powered by [@pimzino/spec-workflow-mcp](https://www.npmjs.com/package/@pimzino/spec-workflow-mcp), an MCP server that provides:
+- Structured specification workflow (Requirements → Design → Tasks → Implementation)
+- Real-time web dashboard for tracking progress
+- Approval gates between development phases
+- Implementation logging for knowledge preservation
+
 ### Building from Source
 
 ```bash
@@ -846,7 +856,8 @@ This project is licensed under the Apache License 2.0 – see the [LICENSE](LICE
 
 - [arc42](https://arc42.org/) - The proven, practical, and pragmatic architecture template
 - [Dr. Gernot Starke](https://github.com/gernotstarke) and [Dr. Peter Hruschka](https://github.com/Hruschka) - Creators of arc42
-- [Model Context Protocol](https://modelcontextprotocol.io/) - The protocol enabling AI tool use
+- [Model Context Protocol](https://modelcontextprotocol.io/) - The protocol enabling AI tool use, including [MCP Inspector](https://github.com/modelcontextprotocol/inspector) for testing
+- [@pimzino/spec-workflow-mcp](https://www.npmjs.com/package/@pimzino/spec-workflow-mcp) - MCP server powering our Spec Driven Development workflow
 
 ## 📞 Support
 
