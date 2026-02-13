@@ -46,6 +46,8 @@ A Model Context Protocol (MCP) server that helps you create comprehensive archit
   * [For AI Assistants](#for-ai-assistants)
   * [For Users](#for-users)
 * [🔧 Development](#-development)
+  * [Development Methodology](#development-methodology)
+  * [Documentation Quality Assurance](#documentation-quality-assurance)
   * [Building from Source](#building-from-source)
   * [Running in Development Mode](#running-in-development-mode)
 * [🧪 Testing](#-testing)
@@ -66,6 +68,7 @@ A Model Context Protocol (MCP) server that helps you create comprehensive archit
 * [🙏 Acknowledgments](#-acknowledgments)
 * [📞 Support](#-support)
 * [🔗 Links](#-links)
+* [⭐ Star History](#-star-history)
 <!-- TOC -->
 
 ## 📋 What is arc42?
@@ -590,7 +593,7 @@ After initialization, your project will have:
 your-project/
 └── arc42-docs/
     ├── README.md                    # Getting started guide
-    ├── arc42-template.md            # Main combined document
+    ├── arc42-documentation.md        # Main combined document
     ├── config.yaml                  # Configuration
     ├── images/                      # Diagrams and images
     └── sections/                    # Individual section files
@@ -637,6 +640,14 @@ The SDD workflow is powered by [@pimzino/spec-workflow-mcp](https://www.npmjs.co
 - Real-time web dashboard for tracking progress
 - Approval gates between development phases
 - Implementation logging for knowledge preservation
+
+### Documentation Quality Assurance
+
+Architecture documentation is reviewed and validated using [dacli](https://github.com/docToolchain/dacli), a Documentation Access CLI that bridges LLMs with documentation projects. As an MCP server, dacli enables:
+- Hierarchical navigation and content retrieval of documentation
+- Full-text search across all documentation sections
+- Structure validation to detect orphaned files and issues
+- Programmatic querying and manipulation of AsciiDoc/Markdown content
 
 ### Building from Source
 
@@ -858,6 +869,7 @@ This project is licensed under the Apache License 2.0 – see the [LICENSE](LICE
 - [Dr. Gernot Starke](https://github.com/gernotstarke) and [Dr. Peter Hruschka](https://github.com/Hruschka) - Creators of arc42
 - [Model Context Protocol](https://modelcontextprotocol.io/) - The protocol enabling AI tool use, including [MCP Inspector](https://github.com/modelcontextprotocol/inspector) for testing
 - [@pimzino/spec-workflow-mcp](https://www.npmjs.com/package/@pimzino/spec-workflow-mcp) - MCP server powering our Spec Driven Development workflow
+- [dacli](https://github.com/docToolchain/dacli) - Documentation Access CLI for reviewing and validating architecture documentation
 
 ## 📞 Support
 
@@ -880,6 +892,6 @@ This project is licensed under the Apache License 2.0 – see the [LICENSE](LICE
 [![arc42](https://img.shields.io/badge/template-arc42-orange.svg)](https://arc42.org/)
 [![MCP](https://img.shields.io/badge/protocol-MCP-blue.svg)](https://modelcontextprotocol.io/)
 
-## Star History
+## ⭐ Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=h2nguyen/Arc42-Node-MCP-Server&type=date&legend=top-left)](https://www.star-history.com/#h2nguyen/Arc42-Node-MCP-Server&type=date&legend=top-left)

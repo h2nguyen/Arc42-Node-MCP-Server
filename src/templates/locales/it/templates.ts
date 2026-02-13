@@ -1036,7 +1036,7 @@ Questa directory contiene la documentazione dell'architettura per ${name}, basat
 
 - \`sections/\` - File markdown delle singole sezioni (12 sezioni)
 - \`images/\` - Diagrammi e immagini
-- \`arc42-template.md\` - Documentazione principale combinata
+- \`arc42-documentation.md\` - Documentazione principale combinata
 - \`config.yaml\` - Configurazione
 
 ## Le 12 Sezioni arc42

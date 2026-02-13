@@ -1036,7 +1036,7 @@ Dieses Verzeichnis enthält die Architekturdokumentation für ${name}, basierend
 
 - \`sections/\` - Einzelne Abschnitts-Markdown-Dateien (12 Abschnitte)
 - \`images/\` - Diagramme und Bilder
-- \`arc42-template.md\` - Kombinierte Hauptdokumentation
+- \`arc42-documentation.md\` - Kombinierte Hauptdokumentation
 - \`config.yaml\` - Konfiguration
 
 ## Die 12 arc42-Abschnitte

@@ -124,10 +124,10 @@ And: Changes isolated to new file + server.ts registration
 
 | Metric | Minimum | Target |
 |--------|---------|--------|
-| **Statement Coverage** | 70% | 85% |
-| **Branch Coverage** | 60% | 75% |
-| **Function Coverage** | 70% | 85% |
-| **Line Coverage** | 70% | 85% |
+| **Statement Coverage** | 80% | 90% |
+| **Branch Coverage** | 75% | 85% |
+| **Function Coverage** | 90% | 95% |
+| **Line Coverage** | 80% | 90% |
 
 ## 10.4 Performance Requirements
 

@@ -103,10 +103,10 @@ describe('arc42-init', () => {
         expect(readmeContent).toContain('Architecture Documentation');
       });
 
-      it('should create arc42-template.md', async () => {
+      it('should create arc42-documentation.md', async () => {
         await arc42InitHandler({ projectName: 'test-project' }, context);
 
-        const templatePath = join(context.workspaceRoot, 'arc42-template.md');
+        const templatePath = join(context.workspaceRoot, 'arc42-documentation.md');
         expect(existsSync(templatePath)).toBe(true);
 
         const templateContent = readFileSync(templatePath, 'utf-8');

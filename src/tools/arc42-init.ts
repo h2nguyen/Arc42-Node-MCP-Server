@@ -122,7 +122,7 @@ arc42_template_commit: ${ARC42_REFERENCE.commitSha}
 
     // Create main template file with localized section titles
     await writeFile(
-      join(workspaceRoot, 'arc42-template.md'),
+      join(workspaceRoot, 'arc42-documentation.md'),
       getMainTemplateContent(projectName, language)
     );
 

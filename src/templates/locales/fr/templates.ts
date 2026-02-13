@@ -1036,7 +1036,7 @@ Ce répertoire contient la documentation d'architecture pour ${name}, basée sur
 
 - \`sections/\` - Fichiers markdown des sections individuelles (12 sections)
 - \`images/\` - Diagrammes et images
-- \`arc42-template.md\` - Documentation principale combinée
+- \`arc42-documentation.md\` - Documentation principale combinée
 - \`config.yaml\` - Configuration
 
 ## Les 12 Sections arc42

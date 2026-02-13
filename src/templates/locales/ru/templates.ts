@@ -648,7 +648,7 @@ export function getReadmeContent(projectName?: string): string {
 
 - \`sections/\` - Отдельные markdown-файлы разделов (12 разделов)
 - \`images/\` - Диаграммы и изображения
-- \`arc42-template.md\` - Основная объединенная документация
+- \`arc42-documentation.md\` - Основная объединенная документация
 - \`config.yaml\` - Конфигурация
 
 ## 12 разделов arc42

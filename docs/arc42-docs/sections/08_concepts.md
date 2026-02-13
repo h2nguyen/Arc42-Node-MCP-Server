@@ -193,7 +193,7 @@ If an unsupported language is requested:
 ```
 arc42-docs/
 ├── README.md              # Getting started guide (localized)
-├── arc42-template.md      # Combined main document (localized ToC)
+├── arc42-documentation.md # Combined main document (localized ToC)
 ├── config.yaml            # Metadata & configuration (includes language)
 ├── images/                # Diagrams and screenshots
 │   └── .gitkeep
@@ -330,10 +330,10 @@ All tools return consistent MCP-compliant responses:
 // vitest.config.ts
 coverage: {
   thresholds: {
-    statements: 70,
-    branches: 60,
-    functions: 70,
-    lines: 70
+    statements: 80,
+    branches: 75,
+    functions: 90,
+    lines: 80
   }
 }
 ```

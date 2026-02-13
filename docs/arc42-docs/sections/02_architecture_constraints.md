@@ -43,6 +43,7 @@
 | `zod` | ^3.25.36 | Schema validation for tool inputs |
 | `yaml` | ^2.3.4 | YAML configuration file handling |
 | `gray-matter` | ^4.0.3 | Markdown frontmatter parsing |
+| `chokidar` | ^3.5.3 | File system watching for hot-reload |
 
 ### Development Dependencies
 

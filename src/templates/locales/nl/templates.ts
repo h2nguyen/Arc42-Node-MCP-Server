@@ -1036,7 +1036,7 @@ Deze directory bevat de architectuurdocumentatie voor ${name}, gebaseerd op het 
 
 - \`sections/\` - Individuele sectie-markdown-bestanden (12 secties)
 - \`images/\` - Diagrammen en afbeeldingen
-- \`arc42-template.md\` - Gecombineerde hoofddocumentatie
+- \`arc42-documentation.md\` - Gecombineerde hoofddocumentatie
 - \`config.yaml\` - Configuratie
 
 ## De 12 arc42-Secties

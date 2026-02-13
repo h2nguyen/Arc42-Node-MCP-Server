@@ -109,7 +109,7 @@ docker run -v /path/to/project:/project arc42-node-mcp-server
 ├─────────────────────────────────────────────────────────────────────────┤
 │                                                                         │
 │  ┌─────────────────────────────────────────────────────────────────┐   │
-│  │  FROM node:24-slim                                              │   │
+│  │  FROM node:24-alpine                                             │   │
 │  │                                                                  │   │
 │  │  WORKDIR /app                                                   │   │
 │  │                                                                  │   │
@@ -160,7 +160,7 @@ docker run -v /path/to/project:/project arc42-node-mcp-server
 |-------------|--------------|--------------|-------|
 | **Development** | 24.x (via .nvmrc) | Source + tsx | Live development |
 | **Production** | 24+ | npm package | End users |
-| **Docker** | 24-slim | Container image | Isolated deployment |
+| **Docker** | 24-alpine | Container image | Isolated deployment |
 | **CI/CD** | 22, 24 (matrix) | GitHub Actions | Testing compatibility |
 
 ## 7.6 Configuration Files

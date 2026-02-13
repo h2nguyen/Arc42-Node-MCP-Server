@@ -168,7 +168,7 @@ Add tools to generate Mermaid diagrams from code or add diagram generation promp
 ### TD-4: Manual Combined Document Assembly
 
 **Description:**  
-The `arc42-template.md` main document is not automatically assembled from sections.
+The `arc42-documentation.md` main document is not automatically assembled from sections.
 
 **Impact:**  
 Users must manually combine sections for single-file view.
