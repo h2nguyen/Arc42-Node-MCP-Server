@@ -57,7 +57,7 @@ The core problem it solves: Creating and maintaining software architecture docum
 ## Future Vision
 
 ### Potential Enhancements
-- **Multi-Language Support**: Templates in languages beyond English (German, French, etc.)
+- **Multiple Output Formats**: Support for different documentation file formats (Markdown, AsciiDoc) with potential for additional formats in the future
 - **Template Variants**: Different arc42 template variants for different project types (microservices, monoliths, embedded systems)
 - **Diagram Generation**: AI-assisted generation of architecture diagrams (Mermaid, PlantUML) embedded in documentation
 - **Export Formats**: Support for exporting to PDF, HTML, Confluence, or other documentation platforms

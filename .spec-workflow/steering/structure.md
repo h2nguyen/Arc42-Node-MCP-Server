@@ -16,12 +16,33 @@ Arc42-Node-MCP-Server/
 │   │   ├── generate-template.ts
 │   │   ├── update-section.ts
 │   │   └── get-section.ts
-│   ├── templates/             # Arc42 template content
-│   │   ├── index.ts           # Template exports
-│   │   └── arc42-reference.ts # Arc42 version information
+│   ├── templates/             # Arc42 template content & localization
+│   │   ├── index.ts           # Template exports & public API
+│   │   ├── arc42-reference.ts # Arc42 version information
+│   │   └── locales/           # Multi-language support (Strategy Pattern)
+│   │       ├── index.ts       # Locale barrel exports
+│   │       ├── language-strategy.ts   # LanguageStrategy interface
+│   │       ├── language-factory.ts    # Factory for creating strategies
+│   │       ├── language-registry.ts   # Registry for language strategies
+│   │       ├── template-provider.ts   # Unified template access API
+│   │       ├── en/            # English (default)
+│   │       │   ├── index.ts   # English strategy export
+│   │       │   ├── sections.ts # Section metadata
+│   │       │   └── templates.ts # Template content
+│   │       ├── de/            # German
+│   │       ├── es/            # Spanish
+│   │       ├── fr/            # French
+│   │       ├── it/            # Italian
+│   │       ├── nl/            # Dutch
+│   │       ├── pt/            # Portuguese
+│   │       ├── ru/            # Russian
+│   │       ├── cz/            # Czech
+│   │       ├── ukr/           # Ukrainian
+│   │       └── zh/            # Chinese
 │   └── __tests__/             # Test files (mirrors source structure)
 │       ├── fixtures/
 │       ├── templates/
+│       │   └── locales/       # Language strategy tests
 │       └── tools/
 ├── dist/                       # Compiled JavaScript output
 ├── docs/                       # Documentation
@@ -36,7 +57,8 @@ Arc42-Node-MCP-Server/
 ├── .spec-workflow/             # Spec workflow documentation
 │   ├── steering/              # Steering documents (product, tech, structure)
 │   ├── specs/                 # Feature specifications
-│   └── templates/             # Spec templates
+│   ├── templates/             # Spec templates
+│   └── user-templates/        # Custom user template overrides
 └── [config files]              # package.json, tsconfig.json, etc.
 ```
 
@@ -177,6 +199,79 @@ class Arc42MCPServer {
 - **Server** → Can import tools/, types.ts
 - **Index** → Only imports server.ts
 
+## Multi-Language Architecture (v2.0.0+)
+
+The multi-language support uses the **Strategy Pattern** for clean separation and extensibility.
+
+### Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ TemplateProvider                                                │
+│ - Unified API for accessing templates                           │
+│ - Handles language fallback (requested → EN)                    │
+│ - Uses LanguageFactory to get strategies                        │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────────┐
+│ LanguageFactory                                                 │
+│ - Creates LanguageStrategy instances                            │
+│ - Uses LanguageRegistry for lookup                              │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────────┐
+│ LanguageRegistry                                                │
+│ - Stores registered language strategies                         │
+│ - Supports dynamic registration                                 │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────────┐
+│ LanguageStrategy (Interface)                                    │
+│ - getLanguageCode(): SupportedLanguage                          │
+│ - getSectionMetadata(): Arc42Section[]                          │
+│ - getTemplate(section): string                                  │
+│ - getWorkflowGuide(): string                                    │
+└─────────────────────────────────────────────────────────────────┘
+          │
+          ├── EnglishStrategy (EN - default)
+          ├── GermanStrategy (DE)
+          ├── SpanishStrategy (ES)
+          ├── FrenchStrategy (FR)
+          ├── ItalianStrategy (IT)
+          ├── DutchStrategy (NL)
+          ├── PortugueseStrategy (PT)
+          ├── RussianStrategy (RU)
+          ├── CzechStrategy (CZ)
+          ├── UkrainianStrategy (UKR)
+          └── ChineseStrategy (ZH)
+```
+
+### Supported Languages
+| Code | Language   | Status     |
+|------|------------|------------|
+| EN   | English    | Complete   |
+| DE   | German     | Complete   |
+| ES   | Spanish    | Complete   |
+| FR   | French     | Complete   |
+| IT   | Italian    | Complete   |
+| NL   | Dutch      | Complete   |
+| PT   | Portuguese | Complete   |
+| RU   | Russian    | Complete   |
+| CZ   | Czech      | Complete   |
+| UKR  | Ukrainian  | Complete   |
+| ZH   | Chinese    | Complete   |
+
+### Adding a New Language
+
+1. Create language directory: `src/templates/locales/[code]/`
+2. Add three files:
+   - `index.ts` - Export the strategy
+   - `sections.ts` - Localized section metadata
+   - `templates.ts` - Localized template content
+3. Register in `src/templates/locales/index.ts`
+4. Add tests in `src/__tests__/templates/locales/[code]/`
+5. Update `SupportedLanguage` type in `types.ts`
+
 ## Code Size Guidelines
 
 - **File size**: ~200-400 lines maximum (tools are typically 50-150 lines)
@@ -191,18 +286,28 @@ Tests mirror the source structure:
 ```
 src/__tests__/
 ├── fixtures/
-│   └── test-helpers.ts          # Shared test utilities
+│   └── test-helpers.ts              # Shared test utilities
 ├── templates/
-│   ├── arc42-reference.test.ts  # Template version tests
-│   └── index.test.ts            # Template export tests
+│   ├── arc42-reference.test.ts      # Template version tests
+│   ├── index.test.ts                # Template export tests
+│   └── locales/                     # Multi-language support tests
+│       ├── all-strategies.test.ts   # Parameterized tests for all languages
+│       ├── language-factory.test.ts # Factory pattern tests
+│       ├── language-registry.test.ts # Registry tests
+│       ├── language-strategy.test.ts # Strategy interface tests
+│       ├── template-provider.test.ts # Template provider tests
+│       ├── en/
+│       │   └── english-strategy.test.ts # English-specific tests
+│       └── de/
+│           └── german-strategy.test.ts  # German-specific tests
 ├── tools/
-│   ├── arc42-init.test.ts       # Each tool has dedicated test file
+│   ├── arc42-init.test.ts           # Each tool has dedicated test file
 │   ├── arc42-status.test.ts
 │   ├── arc42-workflow-guide.test.ts
 │   ├── generate-template.test.ts
 │   ├── get-section.test.ts
 │   └── update-section.test.ts
-└── types.test.ts                # Type utility tests
+└── types.test.ts                    # Type utility tests
 ```
 
 ### Test Patterns
