@@ -81,3 +81,4 @@ The core problem it solves: Creating and maintaining software architecture docum
 - **Team Collaboration**: Multi-user editing with conflict resolution for team documentation efforts
 - **CI/CD Integration**: Hooks for validating documentation as part of build pipelines
 - **Expert Tips Integration**: Provide curated tips and advice from architecture experts for each arc42 section and subsection, helping users enrich their documentation with industry best practices, common pitfalls to avoid, and proven approaches for creating more useful and reliable architecture content
+- **Semantic Search**: Enable intelligent search across FAQs, expert tips, best practices, and existing documentation content, allowing LLMs to discover relevant context and knowledge to produce richer, more accurate, and contextually appropriate architecture documentation
