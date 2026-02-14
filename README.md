@@ -958,7 +958,8 @@ This project is licensed under the Apache License 2.0 – see the [LICENSE](LICE
 - **arc42 GitHub**: https://github.com/arc42
 - **arc42 Examples**: https://arc42.org/examples (Additional examples are embedded within the documentation at https://docs.arc42.org/)
 - **arc42 FAQ**: https://faq.arc42.org/
-- **arc42 Node MCP Server Github**: https://github.com/h2nguyen/Arc42-Node-MCP-Server
+- **arc42 Node MCP Server on Github**: https://github.com/h2nguyen/Arc42-Node-MCP-Server
+- **arc42 Node MCP Server on NPM**: https://www.npmjs.com/package/@h2nguyen/arc42-node-mcp-server/v/latest
 - **MCP Specification**: https://modelcontextprotocol.io/specification/
 
 ---
