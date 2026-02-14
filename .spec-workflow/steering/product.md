@@ -52,12 +52,28 @@ The core problem it solves: Creating and maintaining software architecture docum
 
 - **Status Dashboard**: `arc42-status` tool provides real-time progress tracking across all 12 sections
 - **Completion Metrics**: Visual indicators of which sections are complete, in-progress, or pending
-- **File-Based Storage**: All documentation stored as Markdown files in standard directory structure for version control
+- **Language & Format Info**: Status displays configured language, format, and available options
+- **File-Based Storage**: All documentation stored as Markdown or AsciiDoc files in standard directory structure for version control
+
+## Current Capabilities (v2.1.0)
+
+### Multi-Language Support (v2.0.0+)
+- Documentation templates available in **11 languages**: EN, DE, ES, FR, IT, NL, PT, RU, CZ, UKR, ZH
+- Language parameter on `arc42-init`, `generate-template`, and `arc42-workflow-guide` tools
+- Localized section titles, descriptions, README content, and workflow guides
+
+### Multi-Format Support (v2.1.0+)
+- Documentation output in **Markdown** and **AsciiDoc** formats
+- **AsciiDoc is the default** format for richer professional documentation (includes, admonitions, cross-references)
+- Native templates for all 11 languages in both formats (sourced from official arc42-template repository)
+- Format parameter on `arc42-init`, `generate-template`, and `arc42-workflow-guide` tools
+- Automatic format detection from file extension
+- Plugin-based architecture for extensibility (`FormatTemplatePlugin` interface)
 
 ## Future Vision
 
 ### Potential Enhancements
-- **Multiple Output Formats**: Support for different documentation file formats (Markdown, AsciiDoc) with potential for additional formats in the future
+- **Additional Output Formats**: Support for reStructuredText, DocBook, or other documentation formats
 - **Template Variants**: Different arc42 template variants for different project types (microservices, monoliths, embedded systems)
 - **Diagram Generation**: AI-assisted generation of architecture diagrams (Mermaid, PlantUML) embedded in documentation
 - **Export Formats**: Support for exporting to PDF, HTML, Confluence, or other documentation platforms

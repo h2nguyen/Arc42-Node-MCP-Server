@@ -43,15 +43,17 @@ The project follows a **tool-based plugin architecture** where each MCP tool is 
    - `update-section`: Content updates
    - `get-section`: Content retrieval
 
-3. **Templates & Localization**: Arc42 templates with multi-language support (11 languages) using the Strategy Pattern. Each language implements `LanguageStrategy` interface with localized section metadata and template content
+3. **Templates & Localization**: Arc42 templates with multi-language (11 languages) and multi-format (Markdown, AsciiDoc) support using the Strategy Pattern. Each language implements `LanguageStrategy` interface with format-aware template methods via `FormatTemplatePlugin` architecture
 
-4. **Types System**: Centralized type definitions for arc42 sections, responses, and contexts
+4. **Output Formats**: Pluggable format system with `OutputFormatStrategy` interface for format-specific syntax generation. Includes `OutputFormatRegistry`, `OutputFormatFactory`, and implementations for Markdown and AsciiDoc
+
+5. **Types System**: Centralized type definitions for arc42 sections, responses, contexts, and format codes
 
 ### Data Storage
-- **Primary storage**: File system (Markdown files)
+- **Primary storage**: File system (Markdown or AsciiDoc files)
 - **Configuration**: YAML files (`config.yaml`)
-- **Data formats**: 
-  - Markdown for documentation content
+- **Data formats**:
+  - Markdown (`.md`) or AsciiDoc (`.adoc`) for documentation content
   - JSON for MCP protocol messages
   - YAML for configuration and front matter
 
@@ -245,12 +247,15 @@ The project SHALL use established design patterns for maintainability, testabili
 
 #### Behavioral Patterns
 
-| Pattern             | Use Case                                 | Implementation                                             |
-|---------------------|------------------------------------------|------------------------------------------------------------|
-| **Strategy**        | Interchangeable language implementations | Each language is a `LanguageStrategy` implementation       |
-| **Registry**        | Language catalog and discovery           | `LanguageRegistry` maintains available languages           |
-| **Template Method** | Common tool handler structure            | Base patterns for request validation, processing, response |
-| **Observer**        | Future: File change notifications        | Chokidar integration for live updates                      |
+| Pattern             | Use Case                                 | Implementation                                              |
+|---------------------|------------------------------------------|-------------------------------------------------------------|
+| **Strategy**        | Interchangeable language implementations | Each language is a `LanguageStrategy` implementation        |
+| **Strategy**        | Interchangeable format implementations   | Each format is an `OutputFormatStrategy` implementation     |
+| **Registry**        | Language catalog and discovery           | `LanguageRegistry` maintains available languages            |
+| **Registry**        | Format catalog and discovery             | `OutputFormatRegistry` maintains available formats          |
+| **Plugin**          | Format-specific template content         | `FormatTemplatePlugin` interface per language               |
+| **Template Method** | Common tool handler structure            | Base patterns for request validation, processing, response  |
+| **Observer**        | Future: File change notifications        | Chokidar integration for live updates                       |
 
 #### Pattern Selection Guidelines
 
@@ -260,6 +265,7 @@ When implementing new features:
 3. **Adding lookup/discovery** → Consider Registry pattern
 4. **Simplifying complex subsystems** → Consider Facade pattern
 5. **Adapting external APIs** → Consider Adapter pattern
+6. **Adding extensible content providers** → Consider Plugin pattern (like `FormatTemplatePlugin`)
 
 ### Modularity & Reusability
 
@@ -419,4 +425,4 @@ describe('LanguageFactory', () => {
 - **Node.js 24+ requirement**: Limits usage to environments with latest Node.js (needed for native ESM features)
 - **Single-user design**: No built-in multi-user collaboration or conflict resolution
 - **No diagram rendering**: Mermaid/PlantUML diagrams stored as text, rendering left to documentation viewers
-- **Markdown-only output**: Documentation output is currently limited to Markdown format (AsciiDoc and other formats are potential future enhancements)
+- **Two output formats**: Currently supports Markdown and AsciiDoc (additional formats could be added via the plugin architecture)
