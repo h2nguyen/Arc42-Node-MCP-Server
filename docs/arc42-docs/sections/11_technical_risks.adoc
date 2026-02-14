@@ -1,0 +1,282 @@
+= 11. Risks and Technical Debt
+
+== 11.1 Technical Risks
+
+=== Risk Matrix
+
+[cols="1,3,2,2,2", options="header"]
+|===
+| ID | Risk | Probability | Impact | Priority
+
+| R-1
+| MCP Protocol Changes
+| Medium
+| High
+| High
+
+| R-2
+| Node.js Version Deprecation
+| Low
+| Medium
+| Medium
+
+| R-3
+| Dependency Vulnerabilities
+| Medium
+| Medium
+| Medium
+
+| R-4
+| arc42 Template Changes
+| Low
+| Low
+| Low
+
+| R-5
+| Cross-platform Path Issues
+| Medium
+| Low
+| Low
+|===
+
+=== R-1: MCP Protocol Changes
+
+*Description:*
+The Model Context Protocol is relatively new and may undergo breaking changes. The MCP SDK could change APIs that our server depends on.
+
+*Indicators:*
+
+* MCP SDK major version updates
+* Breaking changes announced in MCP specification
+
+*Mitigation:*
+
+* Pin MCP SDK to specific minor version
+* Monitor MCP changelog and discussions
+* Maintain test coverage to detect breaks early
+* Plan migration time for major updates
+
+*Contingency:*
+
+* Fork SDK if critical fix needed before upstream
+* Provide migration guide for users on version updates
+
+'''
+
+=== R-2: Node.js Version Deprecation
+
+*Description:*
+We require Node.js 24+. If this version reaches EOL or users can't upgrade, it creates adoption barriers.
+
+*Indicators:*
+
+* Node.js release schedule changes
+* User reports of incompatibility
+
+*Mitigation:*
+
+* Test on multiple Node.js versions (matrix: 22, 24)
+* Document minimum version requirement clearly
+* Provide Docker as version-independent alternative
+
+*Contingency:*
+
+* Backport to earlier Node.js version if widely needed
+* Maintain Docker image with known-good Node version
+
+'''
+
+=== R-3: Dependency Vulnerabilities
+
+*Description:*
+Runtime dependencies (zod, yaml, gray-matter) may have security vulnerabilities discovered.
+
+*Indicators:*
+
+* npm audit warnings
+* CVE notifications
+* Dependabot/Snyk alerts
+
+*Mitigation:*
+
+* Run `npm audit` in CI pipeline
+* Keep dependencies updated regularly
+* Minimize dependency count (4 runtime deps)
+* Use well-maintained, popular packages
+
+*Contingency:*
+
+* Rapid patch release process
+* Fork and fix if upstream unresponsive
+
+'''
+
+=== R-4: arc42 Template Changes
+
+*Description:*
+The upstream arc42 template may change structure, breaking our template alignment.
+
+*Indicators:*
+
+* arc42 repository releases
+* Template structure changes in submodule
+
+*Mitigation:*
+
+* Use git submodule for controlled updates
+* Test after submodule updates
+* Version-lock submodule commit
+
+*Contingency:*
+
+* Adapt templates to match new arc42 structure
+* Document version compatibility in README
+
+'''
+
+=== R-5: Cross-platform Path Issues
+
+*Description:*
+Path handling differences between Windows/macOS/Linux could cause bugs.
+
+*Indicators:*
+
+* User bug reports on specific platforms
+* Path separator issues in tests
+
+*Mitigation:*
+
+* Use Node.js `path` module consistently
+* Test on multiple platforms in CI (if possible)
+* Avoid hardcoded path separators
+
+*Contingency:*
+
+* Platform-specific fixes in path handling
+* Docker as platform-neutral alternative
+
+'''
+
+== 11.2 Technical Debt
+
+=== Current Technical Debt
+
+[cols="1,3,2,2", options="header"]
+|===
+| ID | Item | Severity | Effort to Fix
+
+| TD-1
+| No HTTP transport support
+| Low
+| Medium
+
+| TD-2
+| Limited template customization
+| Low
+| Low
+
+| TD-3
+| No diagram generation
+| Low
+| High
+
+| TD-4
+| Manual combined document assembly
+| Low
+| Medium
+|===
+
+=== TD-1: No HTTP Transport Support
+
+*Description:*
+Only STDIO transport is supported. HTTP/SSE transport would enable remote deployment.
+
+*Impact:*
+Cannot run server remotely or share across team members.
+
+*Remediation:*
+Add HTTP transport option when needed. MCP SDK supports this.
+
+'''
+
+=== TD-2: Limited Template Customization
+
+*Description:*
+Templates are hardcoded in TypeScript. Users cannot customize without modifying source.
+
+*Impact:*
+Organizations with custom arc42 variants must fork the project.
+
+*Remediation:*
+Add configuration for custom templates or template overrides directory.
+
+'''
+
+=== TD-3: No Diagram Generation
+
+*Description:*
+System doesn't generate diagrams (Mermaid, PlantUML). Users must manually create visuals.
+
+*Impact:*
+Documentation lacks automatically generated architecture diagrams.
+
+*Remediation:*
+Add tools to generate Mermaid diagrams from code or add diagram generation prompts.
+
+'''
+
+=== TD-4: Manual Combined Document Assembly
+
+*Description:*
+The `arc42-documentation.adoc` main document is not automatically assembled from sections.
+
+*Impact:*
+Users must manually combine sections for single-file view.
+
+*Remediation:*
+Add tool or script to assemble sections into main document.
+
+'''
+
+== 11.3 Risk Response Plan
+
+[cols="2,5", options="header"]
+|===
+| Risk Level | Response Strategy
+
+| *High*
+| Active mitigation, regular monitoring, contingency plan ready
+
+| *Medium*
+| Passive monitoring, mitigation in place
+
+| *Low*
+| Accept risk, address if occurs
+|===
+
+== 11.4 Monitoring
+
+[cols="2,3,2", options="header"]
+|===
+| Item | Monitoring Method | Frequency
+
+| MCP SDK updates
+| GitHub release notifications
+| Weekly
+
+| npm vulnerabilities
+| CI `npm audit`
+| Every PR
+
+| Node.js releases
+| nodejs.org changelog
+| Monthly
+
+| arc42 template changes
+| Submodule diff review
+| Quarterly
+
+| User-reported issues
+| GitHub issues
+| Daily
+|===

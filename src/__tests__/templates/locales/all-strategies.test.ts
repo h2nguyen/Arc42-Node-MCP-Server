@@ -95,10 +95,10 @@ describe('All Language Strategies', () => {
       });
     });
 
-    describe('Section templates', () => {
+    describe('Section templates (markdown)', () => {
       it.each(ARC42_SECTIONS)('should return valid markdown template for section %s', (section) => {
         // Arrange & Act
-        const template = strategy.getTemplate(section);
+        const template = strategy.getTemplateForFormat(section, 'markdown');
 
         // Assert
         expect(template).toBeDefined();
@@ -109,10 +109,24 @@ describe('All Language Strategies', () => {
       });
     });
 
+    describe('Section templates (asciidoc)', () => {
+      it.each(ARC42_SECTIONS)('should return valid asciidoc template for section %s', (section) => {
+        // Arrange & Act
+        const template = strategy.getTemplateForFormat(section, 'asciidoc');
+
+        // Assert
+        expect(template).toBeDefined();
+        expect(typeof template).toBe('string');
+        expect(template.length).toBeGreaterThan(0);
+        // Template should start with an asciidoc heading
+        expect(template.trim()).toMatch(/^=/);
+      });
+    });
+
     describe('Workflow guide', () => {
-      it('should return non-empty workflow guide', () => {
+      it('should return non-empty markdown workflow guide', () => {
         // Act
-        const guide = strategy.getWorkflowGuide();
+        const guide = strategy.getWorkflowGuideForFormat('markdown');
 
         // Assert
         expect(guide).toBeDefined();
@@ -122,9 +136,21 @@ describe('All Language Strategies', () => {
         expect(guide).toMatch(/^#/);
       });
 
+      it('should return non-empty asciidoc workflow guide', () => {
+        // Act
+        const guide = strategy.getWorkflowGuideForFormat('asciidoc');
+
+        // Assert
+        expect(guide).toBeDefined();
+        expect(typeof guide).toBe('string');
+        expect(guide.length).toBeGreaterThan(100);
+        // Should be asciidoc content
+        expect(guide).toMatch(/^=/);
+      });
+
       it('should contain key sections', () => {
         // Act
-        const guide = strategy.getWorkflowGuide();
+        const guide = strategy.getWorkflowGuideForFormat('markdown');
 
         // Assert - workflow guide should mention key concepts
         expect(guide.toLowerCase()).toContain('arc42');
@@ -132,9 +158,19 @@ describe('All Language Strategies', () => {
     });
 
     describe('README content', () => {
-      it('should return non-empty README content', () => {
+      it('should return non-empty markdown README content', () => {
         // Act
-        const readme = strategy.getReadmeContent();
+        const readme = strategy.getReadmeContentForFormat(undefined, 'markdown');
+
+        // Assert
+        expect(readme).toBeDefined();
+        expect(typeof readme).toBe('string');
+        expect(readme.length).toBeGreaterThan(100);
+      });
+
+      it('should return non-empty asciidoc README content', () => {
+        // Act
+        const readme = strategy.getReadmeContentForFormat(undefined, 'asciidoc');
 
         // Assert
         expect(readme).toBeDefined();
@@ -147,7 +183,7 @@ describe('All Language Strategies', () => {
         const projectName = 'Test Project';
 
         // Act
-        const readme = strategy.getReadmeContent(projectName);
+        const readme = strategy.getReadmeContentForFormat(projectName, 'markdown');
 
         // Assert
         expect(readme).toContain(projectName);
@@ -161,9 +197,9 @@ describe('All Language Strategies', () => {
       const interfaceMethods = [
         'getSectionTitle',
         'getSectionDescription',
-        'getTemplate',
-        'getWorkflowGuide',
-        'getReadmeContent'
+        'getTemplateForFormat',
+        'getWorkflowGuideForFormat',
+        'getReadmeContentForFormat'
       ];
       const interfaceProperties = ['code', 'name', 'nativeName'];
 
@@ -192,11 +228,13 @@ describe('All Language Strategies', () => {
       for (const { strategy } of strategies) {
         const title = strategy.getSectionTitle(section);
         const description = strategy.getSectionDescription(section);
-        const template = strategy.getTemplate(section);
+        const markdownTemplate = strategy.getTemplateForFormat(section, 'markdown');
+        const asciidocTemplate = strategy.getTemplateForFormat(section, 'asciidoc');
 
         expect(title.title).toBeDefined();
         expect(description.description).toBeDefined();
-        expect(template.length).toBeGreaterThan(0);
+        expect(markdownTemplate.length).toBeGreaterThan(0);
+        expect(asciidocTemplate.length).toBeGreaterThan(0);
       }
     });
   });
@@ -218,18 +256,34 @@ describe('All Language Strategies', () => {
       }
     });
 
-    it('should have all 12 templates available for each language', () => {
+    it('should have all 12 markdown templates available for each language', () => {
       for (const { strategy, code } of strategies) {
         let templateCount = 0;
         for (const section of ARC42_SECTIONS) {
-          const template = strategy.getTemplate(section);
+          const template = strategy.getTemplateForFormat(section, 'markdown');
           if (template && template.length > 0) {
             templateCount++;
           }
         }
         expect(
           templateCount,
-          `${code} should have all 12 templates`
+          `${code} should have all 12 markdown templates`
+        ).toBe(12);
+      }
+    });
+
+    it('should have all 12 asciidoc templates available for each language', () => {
+      for (const { strategy, code } of strategies) {
+        let templateCount = 0;
+        for (const section of ARC42_SECTIONS) {
+          const template = strategy.getTemplateForFormat(section, 'asciidoc');
+          if (template && template.length > 0) {
+            templateCount++;
+          }
+        }
+        expect(
+          templateCount,
+          `${code} should have all 12 asciidoc templates`
         ).toBe(12);
       }
     });

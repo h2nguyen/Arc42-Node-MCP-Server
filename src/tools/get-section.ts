@@ -1,6 +1,9 @@
 import { z } from 'zod';
 import { ToolContext, ToolResponse, Arc42Section, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
-import { templateProvider } from '../templates/index.js';
+import {
+  templateProvider,
+  type OutputFormatCode
+} from '../templates/index.js';
 import { existsSync, readFileSync } from 'fs';
 import { readFile, stat } from 'fs/promises';
 import { join } from 'path';
@@ -19,6 +22,26 @@ export const getSectionDescription = `Read content from a specific arc42 section
 This tool allows you to retrieve the current content of any of the 12 arc42 sections. Use this to review existing documentation or before making updates.
 
 You can optionally specify a targetFolder to read documentation from a specific directory instead of the default workspace.`;
+
+/**
+ * Find section file with any supported format extension
+ */
+function findSectionFile(sectionsDir: string, section: string): { path: string; format: OutputFormatCode } | null {
+  // Check for .adoc first (default), then .md
+  const extensions: Array<{ ext: string; format: OutputFormatCode }> = [
+    { ext: '.adoc', format: 'asciidoc' },
+    { ext: '.md', format: 'markdown' }
+  ];
+
+  for (const { ext, format } of extensions) {
+    const sectionPath = join(sectionsDir, `${section}${ext}`);
+    if (existsSync(sectionPath)) {
+      return { path: sectionPath, format };
+    }
+  }
+
+  return null;
+}
 
 export async function getSectionHandler(
   args: Record<string, unknown>,
@@ -44,12 +67,15 @@ export async function getSectionHandler(
   }
 
   try {
-    const sectionPath = join(workspaceRoot, 'sections', `${section}.md`);
+    const sectionsDir = join(workspaceRoot, 'sections');
 
-    if (!existsSync(sectionPath)) {
+    // Find section file with any supported extension
+    const sectionFile = findSectionFile(sectionsDir, section);
+
+    if (!sectionFile) {
       return {
         success: false,
-        message: `Section file not found: ${section}.md. This section might not have been created yet.`
+        message: `Section file not found: ${section}. This section might not have been created yet. Expected ${section}.adoc or ${section}.md`
       };
     }
 
@@ -68,8 +94,8 @@ export async function getSectionHandler(
       }
     }
 
-    const content = await readFile(sectionPath, 'utf-8');
-    const stats = await stat(sectionPath);
+    const content = await readFile(sectionFile.path, 'utf-8');
+    const stats = await stat(sectionFile.path);
     const standardMetadata = SECTION_METADATA[section as Arc42Section];
 
     // Get localized metadata
@@ -79,10 +105,11 @@ export async function getSectionHandler(
 
     return {
       success: true,
-      message: `Section ${localizedMetadata.title} retrieved successfully`,
+      message: `Section ${localizedMetadata.title} retrieved successfully (${sectionFile.format} format)`,
       data: {
         section,
         language,
+        format: sectionFile.format,
         sectionTitle: localizedMetadata.title,
         sectionDescription: localizedMetadata.description,
         content,
@@ -90,7 +117,8 @@ export async function getSectionHandler(
           ...standardMetadata,
           title: localizedMetadata.title,
           description: localizedMetadata.description,
-          path: sectionPath,
+          path: sectionFile.path,
+          format: sectionFile.format,
           lastModified: stats.mtime.toISOString(),
           wordCount,
           size: stats.size

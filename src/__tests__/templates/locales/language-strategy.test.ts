@@ -13,6 +13,7 @@ import type {
   SectionDescription
 } from '../../../templates/locales/language-strategy.js';
 import type { Arc42Section } from '../../../types.js';
+import type { OutputFormatCode } from '../../../templates/formats/output-format-strategy.js';
 import { ALL_SECTIONS } from '../../fixtures/test-helpers.js';
 
 describe('LanguageStrategy Interface', () => {
@@ -40,15 +41,15 @@ describe('LanguageStrategy Interface', () => {
           return { description: 'Test Description', section };
         },
 
-        getTemplate: (section: Arc42Section): string => {
+        getTemplateForFormat: (section: Arc42Section, _format: OutputFormatCode): string => {
           return `# Template for ${section}`;
         },
 
-        getWorkflowGuide: (): string => {
+        getWorkflowGuideForFormat: (_format: OutputFormatCode): string => {
           return '# Workflow Guide';
         },
 
-        getReadmeContent: (): string => {
+        getReadmeContentForFormat: (_projectName: string | undefined, _format: OutputFormatCode): string => {
           return '# README Content';
         }
       };
@@ -59,9 +60,9 @@ describe('LanguageStrategy Interface', () => {
       expect(mockStrategy.nativeName).toBe('English');
       expect(typeof mockStrategy.getSectionTitle).toBe('function');
       expect(typeof mockStrategy.getSectionDescription).toBe('function');
-      expect(typeof mockStrategy.getTemplate).toBe('function');
-      expect(typeof mockStrategy.getWorkflowGuide).toBe('function');
-      expect(typeof mockStrategy.getReadmeContent).toBe('function');
+      expect(typeof mockStrategy.getTemplateForFormat).toBe('function');
+      expect(typeof mockStrategy.getWorkflowGuideForFormat).toBe('function');
+      expect(typeof mockStrategy.getReadmeContentForFormat).toBe('function');
     });
   });
 
@@ -73,9 +74,9 @@ describe('LanguageStrategy Interface', () => {
       nativeName: 'English',
       getSectionTitle: (section: Arc42Section) => ({ title: `Title: ${section}`, section }),
       getSectionDescription: (section: Arc42Section) => ({ description: `Desc: ${section}`, section }),
-      getTemplate: (section: Arc42Section) => `Template: ${section}`,
-      getWorkflowGuide: () => 'Workflow',
-      getReadmeContent: () => 'Readme'
+      getTemplateForFormat: (section: Arc42Section, _format: OutputFormatCode) => `Template: ${section}`,
+      getWorkflowGuideForFormat: (_format: OutputFormatCode) => 'Workflow',
+      getReadmeContentForFormat: (_projectName: string | undefined, _format: OutputFormatCode) => 'Readme'
     };
 
     it('getSectionTitle should accept Arc42Section and return SectionTitle', () => {
@@ -96,21 +97,21 @@ describe('LanguageStrategy Interface', () => {
       expect(typeof result.description).toBe('string');
     });
 
-    it('getTemplate should accept Arc42Section and return string', () => {
-      const result = mockStrategy.getTemplate('01_introduction_and_goals');
+    it('getTemplateForFormat should accept Arc42Section and format, return string', () => {
+      const result = mockStrategy.getTemplateForFormat('01_introduction_and_goals', 'markdown');
 
       expect(typeof result).toBe('string');
       expect(result.length).toBeGreaterThan(0);
     });
 
-    it('getWorkflowGuide should return string without parameters', () => {
-      const result = mockStrategy.getWorkflowGuide();
+    it('getWorkflowGuideForFormat should accept format and return string', () => {
+      const result = mockStrategy.getWorkflowGuideForFormat('asciidoc');
 
       expect(typeof result).toBe('string');
     });
 
-    it('getReadmeContent should return string without parameters', () => {
-      const result = mockStrategy.getReadmeContent();
+    it('getReadmeContentForFormat should accept projectName and format, return string', () => {
+      const result = mockStrategy.getReadmeContentForFormat('MyProject', 'markdown');
 
       expect(typeof result).toBe('string');
     });
@@ -119,7 +120,7 @@ describe('LanguageStrategy Interface', () => {
       ALL_SECTIONS.forEach((section) => {
         const title = mockStrategy.getSectionTitle(section);
         const description = mockStrategy.getSectionDescription(section);
-        const template = mockStrategy.getTemplate(section);
+        const template = mockStrategy.getTemplateForFormat(section, 'markdown');
 
         expect(title.section).toBe(section);
         expect(description.section).toBe(section);
@@ -136,9 +137,9 @@ describe('LanguageStrategy Interface', () => {
         nativeName: 'Deutsch',
         getSectionTitle: () => ({ title: '', section: '01_introduction_and_goals' }),
         getSectionDescription: () => ({ description: '', section: '01_introduction_and_goals' }),
-        getTemplate: () => '',
-        getWorkflowGuide: () => '',
-        getReadmeContent: () => ''
+        getTemplateForFormat: () => '',
+        getWorkflowGuideForFormat: () => '',
+        getReadmeContentForFormat: () => ''
       };
 
       expect(strategy.code).toBe('DE');
@@ -151,9 +152,9 @@ describe('LanguageStrategy Interface', () => {
         nativeName: 'Deutsch',
         getSectionTitle: () => ({ title: '', section: '01_introduction_and_goals' }),
         getSectionDescription: () => ({ description: '', section: '01_introduction_and_goals' }),
-        getTemplate: () => '',
-        getWorkflowGuide: () => '',
-        getReadmeContent: () => ''
+        getTemplateForFormat: () => '',
+        getWorkflowGuideForFormat: () => '',
+        getReadmeContentForFormat: () => ''
       };
 
       expect(strategy.name).toBe('German');
@@ -166,9 +167,9 @@ describe('LanguageStrategy Interface', () => {
         nativeName: 'Deutsch',
         getSectionTitle: () => ({ title: '', section: '01_introduction_and_goals' }),
         getSectionDescription: () => ({ description: '', section: '01_introduction_and_goals' }),
-        getTemplate: () => '',
-        getWorkflowGuide: () => '',
-        getReadmeContent: () => ''
+        getTemplateForFormat: () => '',
+        getWorkflowGuideForFormat: () => '',
+        getReadmeContentForFormat: () => ''
       };
 
       expect(strategy.nativeName).toBe('Deutsch');

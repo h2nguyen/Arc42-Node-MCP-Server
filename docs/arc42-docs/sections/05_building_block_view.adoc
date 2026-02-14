@@ -1,0 +1,477 @@
+= 5. Building Block View
+
+== 5.1 Level 1: System Overview
+
+[plantuml, level1-overview, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+skinparam componentStyle rectangle
+
+rectangle "Arc42 MCP Server" {
+    component "Entry Point" as EP
+    component "Server Core" as SC
+    component "Tools Layer" as TL
+    component "Templates Layer" as TPL
+    component "Locales Module" as LM
+    component "Formats Module" as FM
+    rectangle "Types & Utilities\n(src/types.ts)" as TU
+    
+    EP --> SC
+    SC --> TL
+    TL --> TPL
+    TPL --> LM
+    TPL --> FM
+    EP --> TU
+    SC --> TU
+    TL --> TU
+    TPL --> TU
+}
+@enduml
+----
+
+=== Building Blocks Overview
+
+[cols="2,4,2", options="header"]
+|===
+| Block | Responsibility | Location
+
+| *Entry Point*
+| Process startup, CLI argument handling
+| `src/index.ts`
+
+| *Server Core*
+| MCP server lifecycle, tool registration
+| `src/server.ts`
+
+| *Tools Layer*
+| Individual tool implementations
+| `src/tools/*.ts`
+
+| *Templates Layer*
+| arc42 section templates facade
+| `src/templates/*.ts`
+
+| *Locales Module*
+| Multi-language support infrastructure
+| `src/templates/locales/`
+
+| *Formats Module*
+| Multi-format output support
+| `src/templates/formats/`
+
+| *Types & Utilities*
+| Shared types, constants, helpers
+| `src/types.ts`
+|===
+
+== 5.2 Level 2: Tools Layer
+
+[plantuml, level2-tools, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+skinparam componentStyle rectangle
+
+package "Tools Layer" {
+    component "arc42-workflow-guide" as WG
+    component "arc42-init" as INIT
+    component "arc42-status" as STATUS
+    component "generate-template" as GT
+    component "update-section" as US
+    component "get-section" as GS
+}
+
+note bottom of WG
+  Returns workflow
+  documentation
+  + language param
+  + format param
+end note
+
+note bottom of INIT
+  Creates workspace
+  structure & files
+  + language param
+  + format param
+end note
+
+note bottom of STATUS
+  Reports progress
+  + language info
+  + format info
+  + available langs
+end note
+
+note bottom of GT
+  Creates section
+  template content
+  + language param
+  + format param
+end note
+
+note bottom of US
+  Writes content to
+  section files
+  format-aware
+end note
+
+note bottom of GS
+  Reads section
+  content + lang
+  format-aware
+end note
+@enduml
+----
+
+=== Tool Details
+
+[cols="2,3,3,2", options="header"]
+|===
+| Tool | File | Dependencies | Language/Format Support
+
+| `arc42-workflow-guide`
+| `src/tools/arc42-workflow-guide.ts`
+| Types, Locales
+| ✅ `language` + `format` params
+
+| `arc42-init`
+| `src/tools/arc42-init.ts`
+| Types, Templates, Locales
+| ✅ `language` + `format` params
+
+| `arc42-status`
+| `src/tools/arc42-status.ts`
+| Types, Locales
+| ✅ displays config
+
+| `generate-template`
+| `src/tools/generate-template.ts`
+| Types, Templates, Locales
+| ✅ `language` + `format` params
+
+| `update-section`
+| `src/tools/update-section.ts`
+| Types
+| ✅ format-aware
+
+| `get-section`
+| `src/tools/get-section.ts`
+| Types, Locales
+| ✅ reads config
+|===
+
+== 5.3 Level 2: Templates Layer with Locales and Formats
+
+[plantuml, level2-templates, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+skinparam packageStyle rectangle
+
+package "Templates Layer" {
+    component "templates/index.ts" as TI
+
+    package "templates/locales/" as Locales {
+        interface "LanguageStrategy" as LS
+        component "LanguageRegistry" as LR
+        component "LanguageFactory" as LF
+        component "LanguageStrategyFactory" as LSF
+        component "LocalizedTemplateProvider" as LTP
+
+        package "Language Strategies (11)" as Langs {
+            component "EN" as EN
+            component "DE" as DE
+            component "ES" as ES
+            component "FR" as FR
+            component "IT" as IT
+            component "NL" as NL
+            component "PT" as PT
+            component "RU" as RU
+            component "CZ" as CZ
+            component "UKR" as UKR
+            component "ZH" as ZH
+        }
+    }
+
+    package "templates/formats/" as Formats {
+        interface "OutputFormatStrategy" as OFS
+        component "OutputFormatRegistry" as OFR
+        component "OutputFormatFactory" as OFF
+        component "MarkdownFormatStrategy" as MFS
+        component "AsciiDocFormatStrategy" as AFS
+    }
+
+    component "templates/arc42-reference.ts" as AR
+
+    TI --> Locales
+    TI --> Formats
+    TI --> AR
+}
+
+note right of TI
+  getSectionTemplate(section, lang?, format?)
+  getSectionMetadata(section, lang?)
+  getWorkflowGuide(lang?, format?)
+  getAvailableLanguages()
+  getSupportedOutputFormats()
+end note
+
+note right of AR
+  getArc42TemplateVersion()
+  arc42Reference object
+end note
+@enduml
+----
+
+== 5.4 Level 3: Locales and Formats Modules (Design Patterns)
+
+[plantuml, level3-design-patterns, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+package "Strategy Pattern" {
+    interface "LanguageStrategy" as LS {
+        +code: string
+        +name: string
+        +nativeName: string
+        +getSectionTitle()
+        +getTemplateForFormat()
+        +getWorkflowGuideForFormat()
+    }
+    
+    class "EnglishStrategy" as EN
+    class "GermanStrategy" as DE
+    class "SpanishStrategy" as ES
+    class "..." as Other
+    
+    EN ..|> LS
+    DE ..|> LS
+    ES ..|> LS
+    Other ..|> LS
+}
+
+package "Registry Pattern" {
+    class "LanguageRegistry" as LR {
+        -strategies: Map
+        +register(s)
+        +get(code)
+        +getAvailableCodes()
+        +isSupported()
+    }
+    
+    LR --> LS : uses
+}
+
+package "Factory Pattern" {
+    class "LanguageFactory" as LF {
+        +create(code)
+        +createWithFallback()
+        +normalizeCode()
+    }
+    
+    LF --> LR : uses
+}
+
+package "Plugin Architecture" {
+    interface "FormatTemplatePlugin" as FTP {
+        +getTemplate()
+        +getWorkflowGuide()
+        +getReadmeContent()
+    }
+    
+    class "LanguageStrategyFactory" as LSF {
+        +createLanguageStrategy()
+        +createFormatPlugin()
+        +createWithFallback()
+    }
+    
+    class "MarkdownPlugin" as MP
+    class "AsciiDocPlugin" as AP
+    
+    MP ..|> FTP
+    AP ..|> FTP
+    LSF --> FTP : creates
+}
+
+package "Output Format Strategy" {
+    interface "OutputFormatStrategy" as OFS {
+        +code: string
+        +fileExtension: string
+        +formatHeading()
+        +formatTable()
+        +formatCode()
+    }
+    
+    class "MarkdownFormatStrategy" as MFS
+    class "AsciiDocFormatStrategy" as AFS
+    
+    MFS ..|> OFS
+    AFS ..|> OFS
+    
+    class "OutputFormatRegistry" as OFR
+    class "OutputFormatFactory" as OFF
+    
+    OFR --> OFS
+    OFF --> OFR
+}
+
+package "Facade Pattern" {
+    class "LocalizedTemplateProvider" as LTP {
+        +getTemplate(format)
+        +getSectionMetadata()
+        +getWorkflowGuide(format)
+        +getAvailableLangs()
+    }
+    
+    LTP --> LF
+    LTP --> OFF
+}
+@enduml
+----
+
+== 5.5 File Structure
+
+[source]
+----
+src/
+├── index.ts                 # Entry point, CLI handling
+├── server.ts                # Arc42MCPServer class
+├── types.ts                 # Types, constants, utilities
+│
+├── tools/
+│   ├── index.ts             # Tool exports
+│   ├── arc42-workflow-guide.ts  # + format param
+│   ├── arc42-init.ts            # + format param
+│   ├── arc42-status.ts          # displays format config
+│   ├── generate-template.ts     # + format param
+│   ├── update-section.ts        # format-aware file handling
+│   └── get-section.ts           # format-aware file reading
+│
+├── templates/
+│   ├── index.ts             # Template functions (facade)
+│   ├── arc42-reference.ts   # arc42 template reference
+│   │
+│   ├── formats/             # Output format support
+│   │   ├── index.ts                    # Barrel export + utilities
+│   │   ├── output-format-strategy.ts   # Interface + types
+│   │   ├── output-format-registry.ts   # Registry class
+│   │   ├── output-format-factory.ts    # Factory class
+│   │   ├── markdown-format-strategy.ts # Markdown implementation
+│   │   └── asciidoc-format-strategy.ts # AsciiDoc implementation
+│   │
+│   └── locales/             # Multi-language support
+│       ├── index.ts                   # Barrel export + singletons
+│       ├── language-strategy.ts       # Interface (format-aware)
+│       ├── language-registry.ts       # Registry class
+│       ├── language-factory.ts        # Factory class
+│       ├── language-strategy-factory.ts # Plugin factory
+│       ├── template-provider.ts       # Facade class (format-aware)
+│       │
+│       ├── en/                  # English strategy
+│       │   ├── index.ts              # Uses plugin architecture
+│       │   ├── sections.ts           # Section titles/descriptions
+│       │   ├── templates-markdown.ts # Markdown templates
+│       │   └── templates-asciidoc.ts # Native AsciiDoc templates
+│       ├── de/                  # German strategy (same structure)
+│       ├── es/                  # Spanish strategy
+│       └── ...                  # (11 languages total)
+│
+└── __tests__/               # Test files (mirrors src/ structure)
+    ├── templates/
+    │   ├── formats/             # Format tests
+    │   └── locales/             # Language tests
+    ├── tools/
+    │   └── *.test.ts            # Tool tests with format scenarios
+    └── integration/             # Integration tests
+----
+
+== 5.6 Key Interfaces
+
+=== LanguageStrategy (Format-Aware)
+
+[source,typescript]
+----
+interface LanguageStrategy {
+    readonly code: LanguageCode;    // e.g., 'EN', 'DE'
+    readonly name: string;          // e.g., 'English', 'German'
+    readonly nativeName: string;    // e.g., 'English', 'Deutsch'
+
+    getSectionTitle(section: Arc42Section): SectionTitle;
+    getSectionDescription(section: Arc42Section): SectionDescription;
+
+    // Format-aware methods (dispatch to FormatTemplatePlugin)
+    getTemplateForFormat(section: Arc42Section, format: OutputFormatCode): string;
+    getWorkflowGuideForFormat(format: OutputFormatCode): string;
+    getReadmeContentForFormat(projectName: string | undefined, format: OutputFormatCode): string;
+}
+----
+
+=== FormatTemplatePlugin
+
+[source,typescript]
+----
+interface FormatTemplatePlugin {
+    getTemplate(section: Arc42Section): string;
+    getWorkflowGuide(): string;
+    getReadmeContent(projectName?: string): string;
+}
+----
+
+=== OutputFormatStrategy
+
+[source,typescript]
+----
+interface OutputFormatStrategy {
+    readonly code: OutputFormatCode;    // 'markdown' | 'asciidoc'
+    readonly name: string;              // e.g., 'Markdown', 'AsciiDoc'
+    readonly fileExtension: string;     // e.g., '.md', '.adoc'
+
+    // Text formatting
+    formatHeading(text: string, level: number): string;
+    formatBold(text: string): string;
+    formatItalic(text: string): string;
+    formatCode(code: string, language?: string): string;
+    formatInlineCode(text: string): string;
+
+    // Lists
+    formatUnorderedList(items: string[]): string;
+    formatOrderedList(items: string[]): string;
+
+    // Links and media
+    formatLink(text: string, url: string): string;
+    formatImage(alt: string, url: string): string;
+
+    // Structural
+    formatTable(headers: string[], rows: string[][]): string;
+    formatBlockquote(text: string): string;
+    formatHorizontalRule(): string;
+    formatAnchor(id: string): string;
+
+    // File naming
+    getReadmeFilename(): string;
+    getSectionFilename(section: string): string;
+}
+----
+
+=== Type Definitions
+
+[source,typescript]
+----
+type LanguageCode =
+    | 'EN' | 'DE' | 'ES' | 'FR' | 'IT'
+    | 'NL' | 'PT' | 'RU' | 'CZ' | 'UKR' | 'ZH';
+
+type OutputFormatCode = 'markdown' | 'asciidoc';
+
+// Format code aliases for flexible input
+const OUTPUT_FORMAT_ALIASES: Record<string, OutputFormatCode> = {
+    'md': 'markdown', 'markdown': 'markdown',
+    'adoc': 'asciidoc', 'asciidoc': 'asciidoc', 'ascii': 'asciidoc'
+};
+----

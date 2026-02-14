@@ -1,0 +1,538 @@
+= 8. Cross-cutting Concepts
+
+== 8.1 Domain Model
+
+[plantuml, domain-model, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+class Arc42Status {
+    projectName
+    initialized
+    sections[]
+    completeness
+    language
+    format
+}
+
+class DocumentStatus {
+    exists
+    path
+    wordCount
+    completeness
+}
+
+class ToolContext {
+    projectPath
+    workspaceRoot
+}
+
+class ToolResponse {
+    success
+    message
+    data
+    nextSteps[]
+}
+
+class SectionMetadata {
+    name
+    title
+    description
+    order
+}
+
+enum Arc42Section {
+    12 section IDs
+}
+
+class LanguageStrategy {
+    code
+    name
+    nativeName
+    methods...
+}
+
+enum LanguageCode {
+    EN, DE, ES, FR
+    IT, NL, PT, RU
+    CZ, UKR, ZH
+}
+
+enum OutputFormatCode {
+    markdown
+    asciidoc
+}
+
+Arc42Status "1" *-- "*" DocumentStatus : contains
+Arc42Section <-- SectionMetadata
+LanguageStrategy --> LanguageCode
+@enduml
+----
+
+== 8.2 Error Handling Strategy
+
+=== Approach
+
+All errors are caught and converted to structured `ToolResponse` objects with `success: false`.
+
+[source,typescript]
+----
+// Consistent error response pattern
+interface ToolResponse {
+  success: false;
+  message: "Error description for user";
+  data?: {
+    errorCode?: string;
+    details?: string;
+  };
+}
+----
+
+=== Error Categories
+
+[cols="2,2,4", options="header"]
+|===
+| Category | Handling | User Message
+
+| *Validation Error*
+| Zod schema validation
+| "Invalid input: [field] must be [constraint]"
+
+| *Not Found*
+| Check existence first
+| "Workspace not found. Run arc42-init first."
+
+| *File System Error*
+| Try-catch with details
+| "Failed to write section: [error details]"
+
+| *Permission Error*
+| Catch EACCES/EPERM
+| "Permission denied writing to [path]"
+
+| *Invalid Language*
+| Language validation
+| "Invalid language code: [code]. Supported: EN, DE, ..."
+
+| *Invalid Format*
+| Format validation
+| "Invalid format code: [code]. Supported: markdown, asciidoc"
+|===
+
+== 8.3 Validation Concept
+
+=== Input Validation with Zod
+
+[source,typescript]
+----
+// Schema definition in server.ts
+inputSchema: {
+  projectName: z.string().describe('Name of the project'),
+  language: z.enum(['EN','DE','ES',...]).optional().describe('Language code'),
+  format: z.enum(['markdown','asciidoc']).optional().describe('Output format'),
+  force: z.boolean().optional().describe('Re-initialize if exists'),
+  targetFolder: z.string().optional().describe('Custom target directory')
+}
+----
+
+=== Section Name Validation
+
+[source,typescript]
+----
+// Enum-based validation ensures only valid sections
+type Arc42Section = 
+  | '01_introduction_and_goals'
+  | '02_architecture_constraints'
+  // ... etc
+  | '12_glossary';
+----
+
+=== Language Code Validation
+
+[source,typescript]
+----
+// Type-safe language code validation
+type LanguageCode = 'EN' | 'DE' | 'ES' | 'FR' | 'IT' | 'NL' | 'PT' | 'RU' | 'CZ' | 'UKR' | 'ZH';
+
+function isLanguageCode(code: string): code is LanguageCode;
+function normalizeLanguageCode(code: string): LanguageCode; // throws on invalid
+----
+
+== 8.4 Internationalization (i18n) Concept
+
+=== Multi-Language Architecture
+
+The system supports *11 languages* using a Strategy Pattern approach:
+
+[plantuml, i18n-flow, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+participant "User Request" as User
+participant "Tool Handler" as Handler
+participant "Locales Module" as Locales
+
+User -> Handler : language: "DE"\nformat: "asciidoc"
+activate Handler
+
+Handler -> Locales : getTemplate("DE", "asciidoc")
+activate Locales
+
+Locales -> Locales : LanguageFactory\ncreates\nGermanStrategy
+
+Locales -> Locales : FormatPlugin\ngets AsciiDoc template
+
+Locales --> Handler : localized content
+deactivate Locales
+
+Handler --> User : German AsciiDoc template
+deactivate Handler
+@enduml
+----
+
+=== Supported Languages
+
+[cols="1,2,2,3", options="header"]
+|===
+| Code | Language | Native Name | Source
+
+| EN
+| English
+| English
+| Default
+
+| DE
+| German
+| Deutsch
+| vendor/arc42-template/DE/
+
+| ES
+| Spanish
+| Español
+| vendor/arc42-template/ES/
+
+| FR
+| French
+| Français
+| vendor/arc42-template/FR/
+
+| IT
+| Italian
+| Italiano
+| vendor/arc42-template/IT/
+
+| NL
+| Dutch
+| Nederlands
+| vendor/arc42-template/NL/
+
+| PT
+| Portuguese
+| Português
+| vendor/arc42-template/PT/
+
+| RU
+| Russian
+| Русский
+| vendor/arc42-template/RU/
+
+| CZ
+| Czech
+| Čeština
+| vendor/arc42-template/CZ/
+
+| UKR
+| Ukrainian
+| Українська
+| vendor/arc42-template/UKR/
+
+| ZH
+| Chinese
+| 中文
+| vendor/arc42-template/ZH/
+|===
+
+=== Language Configuration Persistence
+
+Language and format are stored in `config.yaml` and read by tools:
+
+[source,yaml]
+----
+projectName: "My Project"
+language: DE  # Default language for this workspace
+format: asciidoc  # Default output format
+----
+
+=== Design Patterns Used
+
+[cols="2,3,4", options="header"]
+|===
+| Pattern | Class | Purpose
+
+| *Strategy*
+| `LanguageStrategy`
+| Interface for interchangeable language implementations
+
+| *Registry*
+| `LanguageRegistry`
+| Central storage for all registered strategies
+
+| *Factory*
+| `LanguageFactory`
+| Creates strategies with normalization and fallback
+
+| *Facade*
+| `LocalizedTemplateProvider`
+| Simplified API for tools to access localized content
+
+| *Singleton*
+| Module instances
+| Global access to registry, factory, provider
+
+| *Plugin*
+| `FormatTemplatePlugin`
+| Format-specific template content per language
+|===
+
+=== Fallback Behavior
+
+If an unsupported language is requested:
+
+. `createWithFallback()` logs a warning
+. Returns English strategy as default
+. Tool continues with English content
+
+== 8.5 File Organization Pattern
+
+=== Documentation Workspace Structure
+
+[source]
+----
+arc42-docs/
+├── README.adoc            # Getting started guide (localized)
+├── arc42-documentation.adoc # Combined main document (localized ToC)
+├── config.yaml            # Metadata & configuration (includes language, format)
+├── images/                # Diagrams and screenshots
+│   └── .gitkeep
+└── sections/              # Individual section files (localized titles)
+    ├── 01_introduction_and_goals.adoc
+    ├── 02_architecture_constraints.adoc
+    └── ... (12 sections total)
+----
+
+=== Naming Conventions
+
+[cols="2,3,3", options="header"]
+|===
+| Pattern | Example | Purpose
+
+| Section files
+| `01_introduction_and_goals.adoc`
+| Numbered prefix for ordering
+
+| Config files
+| `config.yaml`
+| YAML for configuration
+
+| Documentation
+| `README.adoc`, `*.adoc`
+| AsciiDoc for content
+
+| Language folders
+| `locales/de/`, `locales/fr/`
+| Lowercase ISO codes
+|===
+
+== 8.6 Template System
+
+=== Template Generation Flow
+
+[plantuml, template-flow, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+rectangle "generate-template(lang, format)" as GT
+rectangle "templateProvider.getTemplate()" as TP
+rectangle "LanguageStrategy (EN/DE/ES/...)" as LS
+rectangle "FormatTemplatePlugin" as FTP
+rectangle "AsciiDoc/Markdown Output" as Output
+
+GT --> TP
+TP --> LS : Selects via LanguageFactory
+LS --> FTP : Routes to format plugin
+FTP --> Output
+
+note right of LS
+  • Title
+  • Description
+  • Guidance text
+  • Examples
+  • Sub-sections
+end note
+@enduml
+----
+
+=== Template Properties
+
+[cols="2,4", options="header"]
+|===
+| Property | Description
+
+| *Guidance Text*
+| AI-friendly instructions for what to document
+
+| *Examples*
+| Placeholder examples to illustrate structure
+
+| *Sub-sections*
+| Breakdown of section components
+
+| *arc42 Attribution*
+| Reference to original arc42 template
+
+| *Localized Content*
+| All content in the requested language
+
+| *Native Format*
+| Templates in native AsciiDoc or Markdown syntax
+|===
+
+== 8.7 Configuration Management
+
+=== config.yaml Structure
+
+[source,yaml]
+----
+projectName: "My Project"
+version: "1.0.0"
+created: "2026-02-11T12:00:00.000Z"
+format: "asciidoc"
+language: "EN"
+arc42_template_version: "9.0-EN"
+arc42_template_date: "July 2025"
+arc42_template_source: "https://github.com/arc42/arc42-template"
+arc42_template_commit: "b29e08928644af7ae49f51d729d14313db0d934c"
+----
+
+=== Dynamic Version Loading
+
+The arc42 template version is loaded dynamically from the git submodule:
+
+[source]
+----
+vendor/arc42-template/EN/version.properties
+↓
+getArc42TemplateVersion()
+↓
+{
+  version: "9.0-EN",
+  date: "July 2025",
+  source: "https://github.com/arc42/arc42-template"
+}
+----
+
+== 8.8 Response Format Convention
+
+All tools return consistent MCP-compliant responses:
+
+[source,typescript]
+----
+// Success response (with language and format info)
+{
+  content: [{
+    type: "text",
+    text: JSON.stringify({
+      success: true,
+      message: "Operation completed (language: DE, format: asciidoc)",
+      data: {
+        language: { code: "DE", name: "German", nativeName: "Deutsch" },
+        format: { code: "asciidoc", name: "AsciiDoc", fileExtension: ".adoc" },
+        availableLanguages: [...],
+        availableFormats: [...],
+        /* operation-specific data */
+      },
+      nextSteps: ["Suggested action 1", "Suggested action 2"]
+    }, null, 2)
+  }],
+  isError: false
+}
+
+// Error response
+{
+  content: [{
+    type: "text", 
+    text: JSON.stringify({
+      success: false,
+      message: "Error description"
+    }, null, 2)
+  }],
+  isError: true
+}
+----
+
+== 8.9 Testing Strategy
+
+[cols="2,4,2", options="header"]
+|===
+| Test Type | Coverage | Tools
+
+| *Unit Tests*
+| Functions, utilities
+| Vitest
+
+| *Template Tests*
+| All 12 section templates
+| Vitest
+
+| *Strategy Tests*
+| All 11 language strategies
+| Vitest (parameterized)
+
+| *Format Tests*
+| Both output formats
+| Vitest
+
+| *Tool Tests*
+| Each MCP tool handler + language/format scenarios
+| Vitest
+
+| *Integration Tests*
+| End-to-end flows
+| Vitest + temp directories
+|===
+
+=== Coverage Thresholds
+
+[source,typescript]
+----
+// vitest.config.ts
+coverage: {
+  thresholds: {
+    statements: 80,
+    branches: 75,
+    functions: 90,
+    lines: 80
+  }
+}
+----
+
+=== Language Strategy Testing
+
+All 11 language strategies are tested with parameterized tests:
+
+[source,typescript]
+----
+describe.each(strategies)('$name ($code) Strategy', ({ strategy, code }) => {
+  it.each(ARC42_SECTIONS)('returns valid template for %s', (section) => {
+    const template = strategy.getTemplateForFormat(section, 'asciidoc');
+    expect(template).toBeDefined();
+    expect(template.length).toBeGreaterThan(0);
+  });
+});
+----

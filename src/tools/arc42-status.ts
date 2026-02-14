@@ -3,9 +3,14 @@ import { ToolContext, ToolResponse, ARC42_SECTIONS, SECTION_METADATA, resolveWor
 import {
   ARC42_REFERENCE,
   templateProvider,
-  getAvailableLanguages
+  getAvailableLanguages,
+  DEFAULT_OUTPUT_FORMAT,
+  SUPPORTED_OUTPUT_FORMAT_CODES,
+  detectOutputFormatFromFilename,
+  outputFormatFactory,
+  type OutputFormatCode
 } from '../templates/index.js';
-import { existsSync, statSync, readFileSync } from 'fs';
+import { existsSync, statSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { parse as parseYaml } from 'yaml';
 
@@ -20,12 +25,55 @@ This tool provides an overview of which sections have been created, their comple
 
 You can optionally specify a targetFolder to check documentation status in a specific directory instead of the default workspace.`;
 
+/**
+ * Find section file with any supported format extension
+ */
+function findSectionFile(sectionsDir: string, section: string): { path: string; format: OutputFormatCode } | null {
+  // Check for .adoc first (default), then .md
+  const extensions: Array<{ ext: string; format: OutputFormatCode }> = [
+    { ext: '.adoc', format: 'asciidoc' },
+    { ext: '.md', format: 'markdown' }
+  ];
+
+  for (const { ext, format } of extensions) {
+    const sectionPath = join(sectionsDir, `${section}${ext}`);
+    if (existsSync(sectionPath)) {
+      return { path: sectionPath, format };
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Detect format from existing files in sections directory
+ */
+function detectProjectFormat(sectionsDir: string): OutputFormatCode | undefined {
+  if (!existsSync(sectionsDir)) {
+    return undefined;
+  }
+
+  try {
+    const files = readdirSync(sectionsDir);
+    for (const file of files) {
+      const format = detectOutputFormatFromFilename(file);
+      if (format) {
+        return format;
+      }
+    }
+  } catch {
+    // Ignore errors
+  }
+
+  return undefined;
+}
+
 export async function arc42StatusHandler(
   args: Record<string, unknown>,
   context: ToolContext
 ): Promise<ToolResponse> {
   const targetFolder = args.targetFolder as string | undefined;
-  
+
   // Resolve workspace root - use targetFolder if provided, otherwise use context default
   const { projectPath, workspaceRoot } = resolveWorkspaceRoot(context, targetFolder);
 
@@ -39,8 +87,9 @@ export async function arc42StatusHandler(
   try {
     const sectionsDir = join(workspaceRoot, 'sections');
 
-    // Read language from config.yaml
+    // Read language and format from config.yaml
     let language = 'EN';
+    let configFormat: OutputFormatCode | undefined;
     let projectName = '';
     const configPath = join(workspaceRoot, 'config.yaml');
     if (existsSync(configPath)) {
@@ -53,10 +102,18 @@ export async function arc42StatusHandler(
         if (config?.projectName) {
           projectName = String(config.projectName);
         }
+        if (config?.format && SUPPORTED_OUTPUT_FORMAT_CODES.includes(config.format)) {
+          configFormat = config.format as OutputFormatCode;
+        }
       } catch {
-        // If config parsing fails, use default language
+        // If config parsing fails, use defaults
       }
     }
+
+    // Detect format from existing files if not in config
+    const detectedFormat = detectProjectFormat(sectionsDir);
+    const effectiveFormat = configFormat || detectedFormat || DEFAULT_OUTPUT_FORMAT;
+    const formatStrategy = outputFormatFactory.createWithFallback(effectiveFormat);
 
     // Get language info for display
     const availableLanguages = getAvailableLanguages();
@@ -74,7 +131,15 @@ export async function arc42StatusHandler(
         name: string;
         nativeName: string;
       };
+      format: {
+        code: OutputFormatCode;
+        name: string;
+        fileExtension: string;
+        configuredFormat: OutputFormatCode | undefined;
+        detectedFormat: OutputFormatCode | undefined;
+      };
       availableLanguages: typeof availableLanguages;
+      availableFormats: readonly OutputFormatCode[];
       arc42TemplateReference: {
         version: string;
         date: string;
@@ -89,7 +154,15 @@ export async function arc42StatusHandler(
       projectName,
       initialized: true,
       language: currentLanguageInfo,
+      format: {
+        code: effectiveFormat,
+        name: formatStrategy.name,
+        fileExtension: formatStrategy.fileExtension,
+        configuredFormat: configFormat,
+        detectedFormat: detectedFormat
+      },
       availableLanguages,
+      availableFormats: SUPPORTED_OUTPUT_FORMAT_CODES,
       arc42TemplateReference: {
         version: ARC42_REFERENCE.version,
         date: ARC42_REFERENCE.date,
@@ -102,15 +175,17 @@ export async function arc42StatusHandler(
     let lastModified: Date | undefined;
 
     for (const section of ARC42_SECTIONS) {
-      const sectionPath = join(sectionsDir, `${section}.md`);
       const standardMetadata = SECTION_METADATA[section];
 
       // Get localized metadata
       const localizedMetadata = templateProvider.getSectionMetadata(section, language);
 
-      if (existsSync(sectionPath)) {
-        const stats = statSync(sectionPath);
-        const content = readFileSync(sectionPath, 'utf-8');
+      // Find section file with any supported extension
+      const sectionFile = findSectionFile(sectionsDir, section);
+
+      if (sectionFile) {
+        const stats = statSync(sectionFile.path);
+        const content = readFileSync(sectionFile.path, 'utf-8');
         const wordCount = content.split(/\s+/).length;
 
         // Simple completeness heuristic: >50 words = some content
@@ -118,7 +193,8 @@ export async function arc42StatusHandler(
 
         status.sections[section] = {
           exists: true,
-          path: sectionPath,
+          path: sectionFile.path,
+          format: sectionFile.format,
           lastModified: stats.mtime.toISOString(),
           wordCount,
           completeness,
@@ -157,7 +233,7 @@ export async function arc42StatusHandler(
 
     return {
       success: true,
-      message: `Documentation status: ${completedSections}/${ARC42_SECTIONS.length} sections have content`,
+      message: `Documentation status: ${completedSections}/${ARC42_SECTIONS.length} sections have content (format: ${formatStrategy.name})`,
       data: status,
       nextSteps: [
         'Use generate-template to get section templates',

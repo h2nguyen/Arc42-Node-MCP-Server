@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/multiple-output-formats/design.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-02-14T01:14:23.344Z",
+      "trigger": "initial",
+      "approvalId": "approval_1771031663331_hl9rvfx0t",
+      "approvalTitle": "Design: Multiple Output Formats (Strategy Pattern Architecture)"
+    }
+  ]
+}

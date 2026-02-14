@@ -1,20 +1,28 @@
 import { z } from 'zod';
 import { ToolContext, ToolResponse, Arc42Section, SECTION_METADATA, ARC42_SECTIONS, getErrorMessage } from '../types.js';
 import {
-  getSectionTemplate,
   getSectionMetadata,
+  getTemplateForFormat,
   SUPPORTED_LANGUAGE_CODES,
   isLanguageCode,
   normalizeLanguageCode
 } from '../templates/index.js';
+import {
+  SUPPORTED_OUTPUT_FORMAT_CODES,
+  DEFAULT_OUTPUT_FORMAT,
+  getOutputFormatStrategyWithFallback
+} from '../templates/formats/index.js';
 
 // Zod schema as the SINGLE SOURCE OF TRUTH for tool input
 const sectionValues = ARC42_SECTIONS as unknown as [Arc42Section, ...Arc42Section[]];
 const languageValues = SUPPORTED_LANGUAGE_CODES as unknown as [string, ...string[]];
+const formatValues = SUPPORTED_OUTPUT_FORMAT_CODES as unknown as [string, ...string[]];
 
 export const generateTemplateInputSchema = {
   section: z.enum(sectionValues).describe('The section to generate template for'),
-  language: z.enum(languageValues).optional().default('EN').describe('Language code for the template. Supported: EN, DE, ES, FR, IT, NL, PT, RU, CZ, UKR, ZH. Defaults to EN.')
+  language: z.enum(languageValues).optional().default('EN').describe('Language code for the template. Supported: EN, DE, ES, FR, IT, NL, PT, RU, CZ, UKR, ZH. Defaults to EN.'),
+  format: z.enum(formatValues).optional().default(DEFAULT_OUTPUT_FORMAT)
+    .describe(`Output format for the template. Supported: markdown (md), asciidoc (adoc). Defaults to ${DEFAULT_OUTPUT_FORMAT}.`)
 };
 
 export const generateTemplateDescription = `Generate a detailed template for a specific arc42 section.
@@ -27,6 +35,7 @@ export async function generateTemplateHandler(
 ): Promise<ToolResponse> {
   const section = args.section as string | undefined;
   const languageArg = (args.language as string) ?? 'EN';
+  const formatArg = (args.format as string) ?? DEFAULT_OUTPUT_FORMAT;
 
   if (!section) {
     return {
@@ -53,20 +62,27 @@ export async function generateTemplateHandler(
     };
   }
 
+  // Get the output format strategy (with fallback to default)
+  const formatStrategy = getOutputFormatStrategyWithFallback(formatArg);
+  const format = formatStrategy.code;
+
   try {
-    // Get localized metadata and template
+    // Get localized metadata and format-specific template
     const localizedMetadata = getSectionMetadata(section as Arc42Section, language);
-    const template = getSectionTemplate(section as Arc42Section, language);
+    const template = getTemplateForFormat(section as Arc42Section, language, format);
 
     // Also include the standard metadata for reference
     const standardMetadata = SECTION_METADATA[section as Arc42Section];
 
     return {
       success: true,
-      message: `Template for ${localizedMetadata.title} generated (language: ${language})`,
+      message: `Template for ${localizedMetadata.title} generated (language: ${language}, format: ${formatStrategy.name})`,
       data: {
         section,
         language,
+        format,
+        formatName: formatStrategy.name,
+        fileExtension: formatStrategy.fileExtension,
         metadata: {
           ...standardMetadata,
           title: localizedMetadata.title,

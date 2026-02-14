@@ -10,6 +10,7 @@
 
 import { Arc42Section } from '../types.js';
 import { templateProvider } from './locales/index.js';
+import type { OutputFormatCode } from './formats/index.js';
 
 // Re-export arc42 reference information
 export {
@@ -54,18 +55,57 @@ export {
   englishStrategy
 } from './locales/index.js';
 
+// Re-export formats module for multi-format support
+export {
+  // Types
+  type OutputFormatStrategy,
+  type OutputFormatCode,
+
+  // Constants
+  SUPPORTED_OUTPUT_FORMAT_CODES,
+  OUTPUT_FORMAT_ALIASES,
+  DEFAULT_OUTPUT_FORMAT,
+
+  // Utility functions
+  isOutputFormatCode,
+  normalizeOutputFormatCode,
+  isOutputFormatSupported,
+  getSupportedOutputFormatCodes,
+  detectOutputFormatFromExtension,
+  detectOutputFormatFromFilename,
+
+  // Classes
+  OutputFormatRegistry,
+  OutputFormatFactory,
+  MarkdownFormatStrategy,
+  AsciiDocFormatStrategy,
+
+  // Singleton instances
+  outputFormatRegistry,
+  outputFormatFactory,
+  markdownFormatStrategy,
+  asciidocFormatStrategy,
+
+  // Convenience functions
+  getOutputFormatStrategy,
+  getOutputFormatStrategyWithFallback,
+  getDefaultOutputFormatStrategy
+} from './formats/index.js';
+
 /**
- * Get template for a specific arc42 section
- *
- * This function maintains backward compatibility with the original API
- * while delegating to the new locales system.
+ * Get template for a specific arc42 section in a specific format
  *
  * @param section - The arc42 section to get the template for
  * @param language - Optional language code (defaults to English)
- * @returns The template content
+ * @param format - Optional output format (defaults to AsciiDoc)
+ * @returns The template content in the specified format
  */
-export function getSectionTemplate(section: Arc42Section, language?: string): string {
-  return templateProvider.getTemplate(section, language);
+export function getTemplateForFormat(
+  section: Arc42Section,
+  language?: string,
+  format?: OutputFormatCode
+): string {
+  return templateProvider.getTemplateForFormat(section, language, format);
 }
 
 /**
@@ -80,13 +120,14 @@ export function getSectionMetadata(section: Arc42Section, language?: string) {
 }
 
 /**
- * Get the workflow guide
+ * Get the workflow guide in a specific format
  *
  * @param language - Optional language code (defaults to English)
+ * @param format - Optional output format (defaults to AsciiDoc)
  * @returns The workflow guide content
  */
-export function getWorkflowGuide(language?: string): string {
-  return templateProvider.getWorkflowGuide(language);
+export function getWorkflowGuideForFormat(language?: string, format?: OutputFormatCode): string {
+  return templateProvider.getWorkflowGuideForFormat(language, format);
 }
 
 /**

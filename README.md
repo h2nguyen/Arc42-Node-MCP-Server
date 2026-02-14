@@ -36,6 +36,10 @@ A Model Context Protocol (MCP) server that helps you create comprehensive archit
   * [Supported Languages](#supported-languages)
   * [Using Languages](#using-languages)
   * [Language Configuration](#language-configuration)
+* [📄 Multi-Format Support](#-multi-format-support)
+  * [Supported Formats](#supported-formats)
+  * [Using Formats](#using-formats)
+  * [Format Configuration](#format-configuration)
 * [📚 The 12 arc42 Sections](#-the-12-arc42-sections)
 * [📖 Usage Examples](#-usage-examples)
   * [Example 1: Starting Fresh](#example-1-starting-fresh)
@@ -92,7 +96,7 @@ This MCP server dynamically reads version information from the **arc42 template 
 | Submodule Path | `vendor/arc42-template`                                         |
 | Version File   | `vendor/arc42-template/EN/version.properties`                   |
 
-> **Note**: The templates in this server are adapted from AsciiDoc to Markdown format with guidance text customized for AI-assisted documentation.
+> **Note**: This server provides native templates in both **AsciiDoc** and **Markdown** formats for all 11 supported languages. AsciiDoc is the default format for new projects.
 
 To display the current arc42 template version:
 
@@ -410,6 +414,7 @@ Load the complete arc42 documentation workflow guide with instructions for all 1
 ```typescript
 arc42-workflow-guide {
   language?: "EN" | "DE" | "ES" | ...  // Optional: language code (default: EN)
+  format?: "asciidoc" | "markdown"     // Optional: output format (default: asciidoc)
 }
 ```
 
@@ -419,8 +424,9 @@ Initialize arc42 documentation workspace for your project.
 ```typescript
 arc42-init {
   projectName: "Your Project Name",
-  language?: "EN",  // Optional: language for templates (default: EN)
-  force?: false,  // Re-initialize even if exists
+  language?: "EN",       // Optional: language for templates (default: EN)
+  format?: "asciidoc",   // Optional: output format (default: asciidoc)
+  force?: false,         // Re-initialize even if exists
   targetFolder?: "/path/to/project"  // Optional: specify target directory
 }
 ```
@@ -432,7 +438,7 @@ Check the status of your documentation, including completion percentage and sect
 arc42-status {
   targetFolder?: "/path/to/project"  // Optional: specify target directory
 }
-// Returns: language info, available languages, and localized section titles
+// Returns: language info, format info, available languages/formats, and localized section titles
 ```
 
 ### generate-template
@@ -442,6 +448,7 @@ Generate a detailed template for any of the 12 arc42 sections.
 generate-template {
   section: "01_introduction_and_goals" | "02_architecture_constraints" | ...,
   language?: "EN" | "DE" | "ES" | ...  // Optional: language code (default: EN)
+  format?: "asciidoc" | "markdown"     // Optional: output format (default: asciidoc)
 }
 ```
 
@@ -451,10 +458,11 @@ Update content in a specific arc42 section.
 ```typescript
 update-section {
   section: "01_introduction_and_goals",
-  content: "# Your markdown content here",
+  content: "= Your AsciiDoc or Markdown content here",
   mode?: "replace" | "append",
   targetFolder?: "/path/to/project"  // Optional: specify target directory
 }
+// Note: Automatically detects format from existing file extension
 ```
 
 ### get-section
@@ -465,6 +473,7 @@ get-section {
   section: "01_introduction_and_goals",
   targetFolder?: "/path/to/project"  // Optional: specify target directory
 }
+// Note: Supports both .md and .adoc file formats
 ```
 
 ## 🌍 Multi-Language Support
@@ -522,11 +531,78 @@ The language is stored in `config.yaml` when you initialize a workspace:
 ```yaml
 projectName: My Project
 language: DE
+format: asciidoc
 ```
 
 - `arc42-status` reads and displays the configured language
 - Templates and section titles are localized based on this setting
 - Language codes are case-insensitive (`de`, `DE`, `De` all work)
+
+## 📄 Multi-Format Support
+
+This MCP server supports documentation output in **2 formats**: Markdown and AsciiDoc.
+
+### Supported Formats
+
+| Code       | Format   | Extension | Aliases                      |
+|------------|----------|-----------|------------------------------|
+| `asciidoc` | AsciiDoc | `.adoc`   | adoc, ascii, asciidoctor, asc |
+| `markdown` | Markdown | `.md`     | md, mdown, mkd               |
+
+> **Default**: AsciiDoc is the default format for new projects. AsciiDoc provides richer formatting features (includes, admonitions, cross-references) ideal for professional documentation.
+
+### Using Formats
+
+**Initialize with a specific format:**
+
+```typescript
+arc42-init {
+  projectName: "My Project",
+  format: "markdown"  // Use Markdown instead of default AsciiDoc
+}
+```
+
+**Generate templates in a specific format:**
+
+```typescript
+generate-template {
+  section: "01_introduction_and_goals",
+  format: "asciidoc"  // AsciiDoc template
+}
+```
+
+**Get workflow guide in a specific format:**
+
+```typescript
+arc42-workflow-guide {
+  format: "markdown"  // Markdown guide
+}
+```
+
+**Combine language and format:**
+
+```typescript
+arc42-init {
+  projectName: "Mein Projekt",
+  language: "DE",
+  format: "asciidoc"  // German AsciiDoc templates
+}
+```
+
+### Format Configuration
+
+The format is stored in `config.yaml` when you initialize a workspace:
+
+```yaml
+projectName: My Project
+language: EN
+format: asciidoc
+```
+
+- `arc42-status` reads and displays the configured format
+- `update-section` automatically detects file format from extension
+- `get-section` supports both `.md` and `.adoc` files
+- Format codes are case-insensitive and support aliases (`adoc`, `ASCIIDOC`, `md` all work)
 
 ## 📚 The 12 arc42 Sections
 

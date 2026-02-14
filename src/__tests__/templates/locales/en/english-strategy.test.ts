@@ -21,9 +21,9 @@ describe('English Language Strategy', () => {
       expect(strategy.nativeName).toBe('English');
       expect(typeof strategy.getSectionTitle).toBe('function');
       expect(typeof strategy.getSectionDescription).toBe('function');
-      expect(typeof strategy.getTemplate).toBe('function');
-      expect(typeof strategy.getWorkflowGuide).toBe('function');
-      expect(typeof strategy.getReadmeContent).toBe('function');
+      expect(typeof strategy.getTemplateForFormat).toBe('function');
+      expect(typeof strategy.getWorkflowGuideForFormat).toBe('function');
+      expect(typeof strategy.getReadmeContentForFormat).toBe('function');
     });
 
     it('should have correct language properties', () => {
@@ -76,10 +76,10 @@ describe('English Language Strategy', () => {
     });
   });
 
-  describe('getTemplate', () => {
-    it('should return template for all 12 sections', () => {
+  describe('getTemplateForFormat', () => {
+    it('should return markdown template for all 12 sections', () => {
       ALL_SECTIONS.forEach((section) => {
-        const template = englishStrategy.getTemplate(section);
+        const template = englishStrategy.getTemplateForFormat(section, 'markdown');
 
         expect(template).toBeTruthy();
         expect(typeof template).toBe('string');
@@ -87,15 +87,32 @@ describe('English Language Strategy', () => {
       });
     });
 
-    it('should return templates with markdown headings', () => {
+    it('should return asciidoc template for all 12 sections', () => {
       ALL_SECTIONS.forEach((section) => {
-        const template = englishStrategy.getTemplate(section);
+        const template = englishStrategy.getTemplateForFormat(section, 'asciidoc');
+
+        expect(template).toBeTruthy();
+        expect(typeof template).toBe('string');
+        expect(template.length).toBeGreaterThan(100);
+      });
+    });
+
+    it('should return markdown templates with markdown headings', () => {
+      ALL_SECTIONS.forEach((section) => {
+        const template = englishStrategy.getTemplateForFormat(section, 'markdown');
         expect(template).toMatch(/^#/m);
       });
     });
 
-    it('should return Introduction template with expected content', () => {
-      const template = englishStrategy.getTemplate('01_introduction_and_goals');
+    it('should return asciidoc templates with asciidoc headings', () => {
+      ALL_SECTIONS.forEach((section) => {
+        const template = englishStrategy.getTemplateForFormat(section, 'asciidoc');
+        expect(template).toMatch(/^=/m);
+      });
+    });
+
+    it('should return Introduction markdown template with expected content', () => {
+      const template = englishStrategy.getTemplateForFormat('01_introduction_and_goals', 'markdown');
 
       expect(template).toContain('Requirements Overview');
       expect(template).toContain('Quality Goals');
@@ -104,33 +121,46 @@ describe('English Language Strategy', () => {
 
     it('should not contain undefined or null values', () => {
       ALL_SECTIONS.forEach((section) => {
-        const template = englishStrategy.getTemplate(section);
-        expect(template).not.toContain('undefined');
-        expect(template).not.toContain('null');
-        expect(template).not.toContain('[object Object]');
+        const markdownTemplate = englishStrategy.getTemplateForFormat(section, 'markdown');
+        expect(markdownTemplate).not.toContain('undefined');
+        expect(markdownTemplate).not.toContain('null');
+        expect(markdownTemplate).not.toContain('[object Object]');
+
+        const asciidocTemplate = englishStrategy.getTemplateForFormat(section, 'asciidoc');
+        expect(asciidocTemplate).not.toContain('undefined');
+        expect(asciidocTemplate).not.toContain('null');
+        expect(asciidocTemplate).not.toContain('[object Object]');
       });
     });
   });
 
-  describe('getWorkflowGuide', () => {
-    it('should return workflow guide in English', () => {
-      const guide = englishStrategy.getWorkflowGuide();
+  describe('getWorkflowGuideForFormat', () => {
+    it('should return markdown workflow guide in English', () => {
+      const guide = englishStrategy.getWorkflowGuideForFormat('markdown');
 
       expect(guide).toBeTruthy();
       expect(typeof guide).toBe('string');
       expect(guide.length).toBeGreaterThan(500);
     });
 
-    it('should contain expected workflow content', () => {
-      const guide = englishStrategy.getWorkflowGuide();
+    it('should return asciidoc workflow guide in English', () => {
+      const guide = englishStrategy.getWorkflowGuideForFormat('asciidoc');
+
+      expect(guide).toBeTruthy();
+      expect(typeof guide).toBe('string');
+      expect(guide.length).toBeGreaterThan(500);
+    });
+
+    it('should contain expected workflow content in markdown', () => {
+      const guide = englishStrategy.getWorkflowGuideForFormat('markdown');
 
       expect(guide).toContain('arc42');
       expect(guide).toContain('Getting Started');
       expect(guide).toContain('12');
     });
 
-    it('should include available languages', () => {
-      const guide = englishStrategy.getWorkflowGuide();
+    it('should include available languages in markdown guide', () => {
+      const guide = englishStrategy.getWorkflowGuideForFormat('markdown');
 
       expect(guide).toContain('Available Languages');
       expect(guide).toContain('EN');
@@ -138,21 +168,36 @@ describe('English Language Strategy', () => {
     });
   });
 
-  describe('getReadmeContent', () => {
-    it('should return README in English', () => {
-      const readme = englishStrategy.getReadmeContent();
+  describe('getReadmeContentForFormat', () => {
+    it('should return markdown README in English', () => {
+      const readme = englishStrategy.getReadmeContentForFormat(undefined, 'markdown');
 
       expect(readme).toBeTruthy();
       expect(typeof readme).toBe('string');
       expect(readme.length).toBeGreaterThan(200);
     });
 
-    it('should contain expected README content', () => {
-      const readme = englishStrategy.getReadmeContent();
+    it('should return asciidoc README in English', () => {
+      const readme = englishStrategy.getReadmeContentForFormat(undefined, 'asciidoc');
+
+      expect(readme).toBeTruthy();
+      expect(typeof readme).toBe('string');
+      expect(readme.length).toBeGreaterThan(200);
+    });
+
+    it('should contain expected README content in markdown', () => {
+      const readme = englishStrategy.getReadmeContentForFormat(undefined, 'markdown');
 
       expect(readme).toContain('Architecture Documentation');
       expect(readme).toContain('arc42');
       expect(readme).toContain('sections');
+    });
+
+    it('should include project name when provided', () => {
+      const projectName = 'My Test Project';
+      const readme = englishStrategy.getReadmeContentForFormat(projectName, 'markdown');
+
+      expect(readme).toContain(projectName);
     });
   });
 
@@ -167,7 +212,7 @@ describe('English Language Strategy', () => {
         return {
           code: strategy.code,
           title: strategy.getSectionTitle('01_introduction_and_goals').title,
-          template: strategy.getTemplate('01_introduction_and_goals')
+          template: strategy.getTemplateForFormat('01_introduction_and_goals', 'markdown')
         };
       }
 

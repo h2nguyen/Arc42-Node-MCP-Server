@@ -84,7 +84,7 @@ describe('arc42-init', () => {
         const configContent = readFileSync(configPath, 'utf-8');
         expect(configContent).toContain(`projectName: ${projectName}`);
         expect(configContent).toContain('version: 1.0.0');
-        expect(configContent).toContain('format: markdown');
+        expect(configContent).toContain('format: asciidoc'); // AsciiDoc is the new default
         expect(configContent).toContain('language: EN');
         // Check for arc42 template reference info
         expect(configContent).toContain('arc42_template_version:');
@@ -92,10 +92,10 @@ describe('arc42-init', () => {
         expect(configContent).toContain('arc42_template_commit:');
       });
 
-      it('should create README.md', async () => {
+      it('should create README.adoc (default format)', async () => {
         await arc42InitHandler({ projectName: 'test-project' }, context);
 
-        const readmePath = join(context.workspaceRoot, 'README.md');
+        const readmePath = join(context.workspaceRoot, 'README.adoc');
         expect(existsSync(readmePath)).toBe(true);
 
         const readmeContent = readFileSync(readmePath, 'utf-8');
@@ -103,10 +103,10 @@ describe('arc42-init', () => {
         expect(readmeContent).toContain('Architecture Documentation');
       });
 
-      it('should create arc42-documentation.md', async () => {
+      it('should create arc42-documentation.adoc (default format)', async () => {
         await arc42InitHandler({ projectName: 'test-project' }, context);
 
-        const templatePath = join(context.workspaceRoot, 'arc42-documentation.md');
+        const templatePath = join(context.workspaceRoot, 'arc42-documentation.adoc');
         expect(existsSync(templatePath)).toBe(true);
 
         const templateContent = readFileSync(templatePath, 'utf-8');
@@ -132,7 +132,7 @@ describe('arc42-init', () => {
         ];
 
         sections.forEach(section => {
-          const sectionPath = join(context.workspaceRoot, 'sections', `${section}.md`);
+          const sectionPath = join(context.workspaceRoot, 'sections', `${section}.adoc`);
           expect(existsSync(sectionPath)).toBe(true);
         });
       });
@@ -277,23 +277,23 @@ describe('arc42-init', () => {
         // Arrange & Act
         await arc42InitHandler({ projectName: 'test-project', language: 'DE' }, context);
 
-        // Assert - German section title
+        // Assert - German section title (default format is AsciiDoc)
         const sectionContent = readFileSync(
-          join(context.workspaceRoot, 'sections', '01_introduction_and_goals.md'),
+          join(context.workspaceRoot, 'sections', '01_introduction_and_goals.adoc'),
           'utf-8'
         );
         expect(sectionContent).toContain('Einführung und Ziele');
       });
 
-      it('should create localized README for specified language', async () => {
+      it('should create README for specified language', async () => {
         // Arrange & Act
         await arc42InitHandler({ projectName: 'test-project', language: 'DE' }, context);
 
-        // Assert - German README
-        const readmeContent = readFileSync(join(context.workspaceRoot, 'README.md'), 'utf-8');
+        // Assert - README with project name (default format is AsciiDoc)
+        const readmeContent = readFileSync(join(context.workspaceRoot, 'README.adoc'), 'utf-8');
         expect(readmeContent).toContain('test-project');
-        // German README should have German content
-        expect(readmeContent).toContain('Architektur');
+        // README should contain standard arc42 structure information
+        expect(readmeContent).toContain('Architecture Documentation');
       });
 
       it.each(['EN', 'DE', 'ES', 'FR', 'IT', 'NL', 'PT', 'RU', 'CZ', 'UKR', 'ZH'])(

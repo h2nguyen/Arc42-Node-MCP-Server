@@ -1,0 +1,158 @@
+= 3. Context and Scope
+
+== 3.1 Business Context
+
+The Arc42 MCP Server sits at the intersection of AI-assisted development tools and architecture documentation practices.
+
+[plantuml, business-context, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+skinparam componentStyle rectangle
+
+rectangle "Business Context" {
+    actor "Software\nArchitects" as SA
+    actor "Development\nTeams" as DT
+    
+    component "MCP Clients" as MCP {
+        component "Claude Desktop" as CD
+        component "Cursor" as CU
+        component "Cline" as CL
+    }
+    
+    rectangle "Arc42 MCP Server" as Server #lightblue
+    
+    database "arc42-docs/\n(Files)" as Files
+    
+    component "arc42\nTemplate" as Template
+    
+    SA --> MCP : uses
+    MCP --> Server : MCP Protocol
+    Server --> Files : creates/updates
+    Files --> DT : reads
+    Template ..> Server : template reference\n(CC BY-SA 4.0)
+}
+@enduml
+----
+
+=== Communication Partners
+
+[cols="2,3,3", options="header"]
+|===
+| Partner | Input | Output
+
+| *Software Architects*
+| Documentation requests via AI chat
+| Structured architecture documentation
+
+| *MCP Clients*
+| MCP tool calls (JSON-RPC over STDIO)
+| Tool results (success/error responses)
+
+| *Development Teams*
+| (indirect) Read documentation files
+| -
+
+| *arc42 Template*
+| Template structure and guidance
+| -
+|===
+
+== 3.2 Technical Context
+
+[plantuml, technical-context, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+rectangle "Technical Context" {
+    rectangle "MCP Client" as Client {
+        component "Claude Desktop" as CD
+        component "Cursor" as CU
+        component "Cline" as CL
+        component "MCP Inspector" as MI
+    }
+    
+    rectangle "Arc42 MCP Server" as Server #lightblue {
+        component "Node.js 24+" as Node
+        component "TypeScript" as TS
+        component "MCP SDK" as SDK
+    }
+    
+    database "File System" as FS {
+        folder "arc42-docs/" as Docs {
+            file "sections/*.adoc"
+            file "config.yaml"
+            folder "images/"
+        }
+    }
+    
+    folder "vendor/arc42-template/" as Vendor {
+        file "Version Info"
+    }
+    
+    Client <--> Server : STDIO\n(JSON-RPC)\nMCP Protocol
+    Server --> FS : File I/O
+    Vendor ..> Server : Git Submodule
+}
+@enduml
+----
+
+=== Technical Interfaces
+
+[cols="2,2,2,4", options="header"]
+|===
+| Interface | Technology | Format | Description
+
+| *MCP Protocol*
+| STDIO
+| JSON-RPC 2.0
+| Communication with MCP clients
+
+| *File System*
+| Node.js fs
+| Markdown/AsciiDoc/YAML
+| Documentation storage
+
+| *Git Submodule*
+| Git
+| Properties file
+| arc42 template version info
+|===
+
+== 3.3 External Interfaces
+
+=== MCP Tool Interface
+
+The server exposes 6 tools via the MCP protocol:
+
+[cols="2,3,3", options="header"]
+|===
+| Tool | Input | Output
+
+| `arc42-workflow-guide`
+| `language?`, `format?`
+| Workflow guidance (JSON)
+
+| `arc42-init`
+| `projectName`, `language?`, `format?`, `force?`, `targetFolder?`
+| Initialization status (JSON)
+
+| `arc42-status`
+| `targetFolder?`
+| Status report (JSON)
+
+| `generate-template`
+| `section`, `language?`, `format?`
+| Section template (JSON)
+
+| `update-section`
+| `section`, `content`, `mode?`, `targetFolder?`
+| Update confirmation (JSON)
+
+| `get-section`
+| `section`, `targetFolder?`
+| Section content (JSON)
+|===

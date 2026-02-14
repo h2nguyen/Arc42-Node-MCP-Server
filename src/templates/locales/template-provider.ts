@@ -21,6 +21,8 @@ import { parse as parseYaml } from 'yaml';
 import type { Arc42Section } from '../../types.js';
 import type { LanguageCode, LanguageInfo } from './language-strategy.js';
 import type { LanguageFactory } from './language-factory.js';
+import type { OutputFormatCode } from '../formats/index.js';
+import { DEFAULT_OUTPUT_FORMAT } from '../formats/index.js';
 
 /**
  * Section metadata with localized content
@@ -69,34 +71,43 @@ export class LocalizedTemplateProvider {
   }
 
   /**
-   * Get the template for a section in a specific language
+   * Get the template for a section in a specific language and format
    *
    * @param section - The arc42 section
    * @param language - The language code (defaults to English)
-   * @returns The template content
+   * @param format - The output format (markdown or asciidoc, defaults to asciidoc)
+   * @returns The template content in the specified format
    */
-  getTemplate(section: Arc42Section, language?: string): string {
+  getTemplateForFormat(
+    section: Arc42Section,
+    language?: string,
+    format?: OutputFormatCode
+  ): string {
     const strategy = language
       ? this.factory.createWithFallback(language)
       : this.factory.getDefault();
-    return strategy.getTemplate(section);
+    const effectiveFormat = format || DEFAULT_OUTPUT_FORMAT;
+    return strategy.getTemplateForFormat(section, effectiveFormat);
   }
 
   /**
-   * Get the template using config.yaml for default language
+   * Get the template using config.yaml for language and format
    *
    * @param section - The arc42 section
    * @param workspacePath - Path to the workspace (or parent containing config.yaml)
    * @param language - Optional override language (takes precedence over config)
-   * @returns The template content
+   * @param format - Optional override format (takes precedence over config)
+   * @returns The template content in the specified format
    */
-  getTemplateWithConfig(
+  getTemplateWithConfigAndFormat(
     section: Arc42Section,
     workspacePath: string,
-    language?: string
+    language?: string,
+    format?: OutputFormatCode
   ): string {
     const effectiveLanguage = language || this.readLanguageFromConfig(workspacePath) || 'EN';
-    return this.getTemplate(section, effectiveLanguage);
+    const effectiveFormat = format || this.readFormatFromConfig(workspacePath) || DEFAULT_OUTPUT_FORMAT;
+    return this.getTemplateForFormat(section, effectiveLanguage, effectiveFormat);
   }
 
   /**
@@ -123,30 +134,34 @@ export class LocalizedTemplateProvider {
   }
 
   /**
-   * Get the workflow guide in a specific language
+   * Get the workflow guide in a specific language and format
    *
    * @param language - The language code (defaults to English)
+   * @param format - The output format (defaults to asciidoc)
    * @returns The workflow guide content
    */
-  getWorkflowGuide(language?: string): string {
+  getWorkflowGuideForFormat(language?: string, format?: OutputFormatCode): string {
     const strategy = language
       ? this.factory.createWithFallback(language)
       : this.factory.getDefault();
-    return strategy.getWorkflowGuide();
+    const effectiveFormat = format || DEFAULT_OUTPUT_FORMAT;
+    return strategy.getWorkflowGuideForFormat(effectiveFormat);
   }
 
   /**
-   * Get README content in a specific language
+   * Get README content in a specific language and format
    *
    * @param language - The language code (defaults to English)
    * @param projectName - Optional project name for README header
+   * @param format - The output format (defaults to asciidoc)
    * @returns The README content
    */
-  getReadmeContent(language?: string, projectName?: string): string {
+  getReadmeContentForFormat(language?: string, projectName?: string, format?: OutputFormatCode): string {
     const strategy = language
       ? this.factory.createWithFallback(language)
       : this.factory.getDefault();
-    return strategy.getReadmeContent(projectName);
+    const effectiveFormat = format || DEFAULT_OUTPUT_FORMAT;
+    return strategy.getReadmeContentForFormat(projectName, effectiveFormat);
   }
 
   /**
@@ -197,6 +212,40 @@ export class LocalizedTemplateProvider {
         const language = config.language;
         if (typeof language === 'string') {
           return language.trim().toUpperCase();
+        }
+      }
+    } catch {
+      // Config file exists but couldn't be parsed
+      return undefined;
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Read the format setting from config.yaml
+   *
+   * @param workspacePath - Path to the workspace directory
+   * @returns The format code from config, or undefined if not found
+   */
+  readFormatFromConfig(workspacePath: string): OutputFormatCode | undefined {
+    const configPath = join(workspacePath, 'config.yaml');
+
+    if (!existsSync(configPath)) {
+      return undefined;
+    }
+
+    try {
+      const content = readFileSync(configPath, 'utf-8');
+      const config = parseYaml(content);
+
+      if (config && typeof config === 'object' && 'format' in config) {
+        const format = config.format;
+        if (typeof format === 'string') {
+          const normalized = format.trim().toLowerCase();
+          if (normalized === 'markdown' || normalized === 'asciidoc') {
+            return normalized as OutputFormatCode;
+          }
         }
       }
     } catch {

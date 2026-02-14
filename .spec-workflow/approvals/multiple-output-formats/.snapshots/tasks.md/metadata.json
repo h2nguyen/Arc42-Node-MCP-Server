@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/multiple-output-formats/tasks.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-02-14T01:18:56.437Z",
+      "trigger": "initial",
+      "approvalId": "approval_1771031936431_ww1rldwts",
+      "approvalTitle": "Tasks: Multiple Output Formats Implementation (24 tasks in 7 groups)"
+    }
+  ]
+}

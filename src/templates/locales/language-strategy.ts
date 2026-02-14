@@ -15,6 +15,7 @@
  */
 
 import type { Arc42Section } from '../../types.js';
+import type { OutputFormatCode } from '../formats/output-format-strategy.js';
 
 /**
  * Supported language codes
@@ -86,9 +87,9 @@ export interface LanguageInfo {
  *   nativeName: 'English',
  *   getSectionTitle: (section) => ({ title: 'Introduction and Goals', section }),
  *   getSectionDescription: (section) => ({ description: 'Overview of requirements...', section }),
- *   getTemplate: (section) => '# Introduction and Goals\n\n...',
- *   getWorkflowGuide: () => '# arc42 Workflow Guide\n\n...',
- *   getReadmeContent: () => '# Project Documentation\n\n...'
+ *   getTemplateForFormat: (section, format) => '# Introduction and Goals\n\n...',
+ *   getWorkflowGuideForFormat: (format) => '# arc42 Workflow Guide\n\n...',
+ *   getReadmeContentForFormat: (projectName, format) => '# Project Documentation\n\n...'
  * };
  * ```
  */
@@ -110,27 +111,30 @@ export interface LanguageStrategy extends LanguageInfo {
   getSectionDescription(section: Arc42Section): SectionDescription;
 
   /**
-   * Get the localized template content for a specific section
+   * Get the localized template content for a specific section in a given format
    *
    * @param section - The arc42 section identifier
-   * @returns The full markdown template for the section
+   * @param format - The output format (markdown or asciidoc)
+   * @returns The full template for the section in the specified format
    */
-  getTemplate(section: Arc42Section): string;
+  getTemplateForFormat(section: Arc42Section, format: OutputFormatCode): string;
 
   /**
-   * Get the localized workflow guide
+   * Get the localized workflow guide in a specific format
    *
-   * @returns The complete workflow guide in markdown format
+   * @param format - The output format (markdown or asciidoc)
+   * @returns The complete workflow guide in the specified format
    */
-  getWorkflowGuide(): string;
+  getWorkflowGuideForFormat(format: OutputFormatCode): string;
 
   /**
-   * Get the localized README content
+   * Get the localized README content in a specific format
    *
    * @param projectName - Optional project name for README header
-   * @returns The README content in markdown format
+   * @param format - The output format (markdown or asciidoc)
+   * @returns The README content in the specified format
    */
-  getReadmeContent(projectName?: string): string;
+  getReadmeContentForFormat(projectName: string | undefined, format: OutputFormatCode): string;
 }
 
 /**
