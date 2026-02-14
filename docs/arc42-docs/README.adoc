@@ -1,0 +1,46 @@
+= Arc42 MCP Server - Architecture Documentation
+
+This directory contains the architecture documentation for Arc42 MCP Server, following the arc42 template.
+
+== Structure
+
+* sections/ - Individual section files (12 sections)
+* images/ - Diagrams and images
+* arc42-documentation.adoc - Main combined documentation
+* config.yaml - Configuration
+
+== The 12 arc42 Sections
+
+. *Introduction and Goals* - Requirements, quality goals, stakeholders
+. *Architecture Constraints* - Technical and organizational constraints
+. *Context and Scope* - Business and technical context
+. *Solution Strategy* - Fundamental decisions and strategies
+. *Building Block View* - Static decomposition
+. *Runtime View* - Dynamic behavior
+. *Deployment View* - Infrastructure and deployment
+. *Cross-cutting Concepts* - Overall regulations and approaches
+. *Architecture Decisions* - Important decisions (ADRs)
+. *Quality Requirements* - Quality tree and scenarios
+. *Risks and Technical Debt* - Known problems and risks
+. *Glossary* - Important terms
+
+== Getting Started
+
+. Start with Section 1: Introduction and Goals
+. Work through sections iteratively
+. Use diagrams to illustrate concepts
+. Keep it focused on decisions, not implementation details
+
+== Generating Documentation
+
+Use the MCP tools to:
+
+* Check status: `arc42-status`
+* Generate templates: `generate-template`
+* Update sections: `update-section`
+
+== Resources
+
+* link:https://arc42.org/[arc42 Website]
+* link:https://docs.arc42.org/[arc42 Documentation]
+* link:https://arc42.org/examples[arc42 Examples]

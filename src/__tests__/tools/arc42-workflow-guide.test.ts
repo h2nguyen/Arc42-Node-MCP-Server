@@ -239,5 +239,91 @@ describe('arc42-workflow-guide', () => {
         }
       );
     });
+
+    describe('format parameter handling', () => {
+      it('should default to asciidoc when no format specified', async () => {
+        // Arrange & Act
+        const result = await arc42WorkflowGuideHandler({}, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('asciidoc');
+      });
+
+      it('should accept markdown format', async () => {
+        // Arrange & Act
+        const result = await arc42WorkflowGuideHandler({ format: 'markdown' }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('markdown');
+        expect(result.message).toContain('markdown');
+      });
+
+      it('should accept asciidoc format', async () => {
+        // Arrange & Act
+        const result = await arc42WorkflowGuideHandler({ format: 'asciidoc' }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('asciidoc');
+        expect(result.message).toContain('asciidoc');
+      });
+
+      it('should return guide in markdown format when specified', async () => {
+        // Arrange & Act
+        const result = await arc42WorkflowGuideHandler({ format: 'markdown' }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        const guide = result.data.guide as string;
+        // Markdown format uses # for headings
+        expect(guide).toMatch(/^#/);
+      });
+
+      it('should return guide in asciidoc format when specified', async () => {
+        // Arrange & Act
+        const result = await arc42WorkflowGuideHandler({ format: 'asciidoc' }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        const guide = result.data.guide as string;
+        // AsciiDoc format uses = for headings
+        expect(guide).toMatch(/^=/);
+      });
+
+      it('should include supported formats in response', async () => {
+        // Arrange & Act
+        const result = await arc42WorkflowGuideHandler({}, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.supportedFormats).toBeDefined();
+        expect(Array.isArray(result.data.supportedFormats)).toBe(true);
+        expect(result.data.supportedFormats).toContain('markdown');
+        expect(result.data.supportedFormats).toContain('asciidoc');
+      });
+
+      it('should include default format in response', async () => {
+        // Arrange & Act
+        const result = await arc42WorkflowGuideHandler({}, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.defaultFormat).toBe('asciidoc');
+      });
+
+      it('should work with both language and format parameters', async () => {
+        // Arrange & Act
+        const result = await arc42WorkflowGuideHandler({ language: 'DE', format: 'markdown' }, context);
+
+        // Assert
+        expect(result.success).toBe(true);
+        expect(result.data.language.code).toBe('DE');
+        expect(result.data.format).toBe('markdown');
+        expect(result.message).toContain('DE');
+        expect(result.message).toContain('markdown');
+      });
+    });
   });
 });

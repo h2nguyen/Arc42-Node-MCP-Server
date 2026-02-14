@@ -1,38 +1,77 @@
 /**
  * Ukrainian Language Strategy
+ *
+ * Implements the LanguageStrategy interface for Ukrainian (Українська).
+ * Provides Ukrainian section titles, descriptions, and templates in both Markdown and AsciiDoc formats.
+ *
  * @module templates/locales/ukr
+ *
+ * Design Patterns:
+ * - Strategy Pattern: Concrete implementation for Ukrainian language
+ * - Plugin Pattern: Format-specific templates are provided via plugins
  */
 
-import type { Arc42Section } from '../../../types.js';
-import type { LanguageStrategy, SectionTitle, SectionDescription } from '../language-strategy.js';
 import { getSectionTitle, getSectionDescription } from './sections.js';
-import { getTemplate, getWorkflowGuide, getReadmeContent } from './templates.js';
+import {
+  getTemplate as getTemplateMarkdown,
+  getWorkflowGuide as getWorkflowGuideMarkdown,
+  getReadmeContent as getReadmeContentMarkdown
+} from './templates-markdown.js';
+import {
+  getTemplate as getTemplateAsciidoc,
+  getWorkflowGuide as getWorkflowGuideAsciidoc,
+  getReadmeContent as getReadmeContentAsciidoc
+} from './templates-asciidoc.js';
+import {
+  createLanguageStrategy,
+  createFormatPlugin,
+  type FormatTemplatePlugin
+} from '../language-strategy-factory.js';
 
-export const ukrainianStrategy: LanguageStrategy = {
+/**
+ * Ukrainian Markdown format plugin
+ */
+export const ukrainianMarkdownPlugin: FormatTemplatePlugin = createFormatPlugin(
+  getTemplateMarkdown,
+  getWorkflowGuideMarkdown,
+  getReadmeContentMarkdown
+);
+
+/**
+ * Ukrainian AsciiDoc format plugin
+ */
+export const ukrainianAsciidocPlugin: FormatTemplatePlugin = createFormatPlugin(
+  getTemplateAsciidoc,
+  getWorkflowGuideAsciidoc,
+  getReadmeContentAsciidoc
+);
+
+/**
+ * Ukrainian Language Strategy
+ *
+ * Provides Ukrainian translations for arc42 documentation.
+ */
+export const ukrainianStrategy = createLanguageStrategy({
   code: 'UKR',
   name: 'Ukrainian',
   nativeName: 'Українська',
-
-  getSectionTitle(section: Arc42Section): SectionTitle {
-    return { title: getSectionTitle(section), section };
-  },
-
-  getSectionDescription(section: Arc42Section): SectionDescription {
-    return { description: getSectionDescription(section), section };
-  },
-
-  getTemplate(section: Arc42Section): string {
-    return getTemplate(section);
-  },
-
-  getWorkflowGuide(): string {
-    return getWorkflowGuide();
-  },
-
-  getReadmeContent(projectName?: string): string {
-    return getReadmeContent(projectName);
+  getSectionTitle,
+  getSectionDescription,
+  formatPlugins: {
+    markdown: ukrainianMarkdownPlugin,
+    asciidoc: ukrainianAsciidocPlugin
   }
-};
+});
 
+// Re-export for convenience
 export { getSectionTitle, getSectionDescription } from './sections.js';
-export { getTemplate, getWorkflowGuide, getReadmeContent } from './templates.js';
+export {
+  getTemplate as getTemplateMarkdown,
+  getWorkflowGuide as getWorkflowGuideMarkdown,
+  getReadmeContent as getReadmeContentMarkdown
+} from './templates-markdown.js';
+export {
+  getTemplate as getTemplateAsciidoc,
+  getWorkflowGuide as getWorkflowGuideAsciidoc,
+  getReadmeContent as getReadmeContentAsciidoc
+} from './templates-asciidoc.js';

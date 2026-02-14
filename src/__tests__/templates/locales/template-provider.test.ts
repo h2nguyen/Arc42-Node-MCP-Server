@@ -11,6 +11,7 @@ import { LanguageRegistry } from '../../../templates/locales/language-registry.j
 import { LanguageFactory } from '../../../templates/locales/language-factory.js';
 import type { LanguageStrategy, LanguageCode } from '../../../templates/locales/language-strategy.js';
 import type { Arc42Section } from '../../../types.js';
+import type { OutputFormatCode } from '../../../templates/formats/output-format-strategy.js';
 import { ALL_SECTIONS } from '../../fixtures/test-helpers.js';
 import { writeFileSync, rmSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
@@ -24,9 +25,24 @@ function createMockStrategy(code: LanguageCode, name: string, nativeName: string
     nativeName,
     getSectionTitle: (section: Arc42Section) => ({ title: `${name} Title for ${section}`, section }),
     getSectionDescription: (section: Arc42Section) => ({ description: `${name} Description for ${section}`, section }),
-    getTemplate: (section: Arc42Section) => `# ${name} Template\n\nContent for ${section}`,
-    getWorkflowGuide: () => `# ${name} Workflow Guide`,
-    getReadmeContent: () => `# ${name} README`
+    getTemplateForFormat: (section: Arc42Section, format: OutputFormatCode) => {
+      if (format === 'asciidoc') {
+        return `= ${name} Template\n\nContent for ${section}`;
+      }
+      return `# ${name} Template\n\nContent for ${section}`;
+    },
+    getWorkflowGuideForFormat: (format: OutputFormatCode) => {
+      if (format === 'asciidoc') {
+        return `= ${name} Workflow Guide`;
+      }
+      return `# ${name} Workflow Guide`;
+    },
+    getReadmeContentForFormat: (_projectName: string | undefined, format: OutputFormatCode) => {
+      if (format === 'asciidoc') {
+        return `= ${name} README`;
+      }
+      return `# ${name} README`;
+    }
   };
 }
 
@@ -66,19 +82,30 @@ describe('LocalizedTemplateProvider', () => {
     });
   });
 
-  describe('getTemplate', () => {
-    it('should return template for specified language', () => {
+  describe('getTemplateForFormat', () => {
+    it('should return markdown template for specified language', () => {
       // Act
-      const template = provider.getTemplate('01_introduction_and_goals', 'DE');
+      const template = provider.getTemplateForFormat('01_introduction_and_goals', 'DE', 'markdown');
 
       // Assert
       expect(template).toContain('German Template');
       expect(template).toContain('01_introduction_and_goals');
+      expect(template).toContain('#');
+    });
+
+    it('should return asciidoc template for specified language', () => {
+      // Act
+      const template = provider.getTemplateForFormat('01_introduction_and_goals', 'DE', 'asciidoc');
+
+      // Assert
+      expect(template).toContain('German Template');
+      expect(template).toContain('01_introduction_and_goals');
+      expect(template).toContain('=');
     });
 
     it('should return English template when no language specified', () => {
       // Act
-      const template = provider.getTemplate('01_introduction_and_goals');
+      const template = provider.getTemplateForFormat('01_introduction_and_goals', undefined, 'markdown');
 
       // Assert
       expect(template).toContain('English Template');
@@ -86,9 +113,9 @@ describe('LocalizedTemplateProvider', () => {
 
     it('should be case-insensitive for language code', () => {
       // Act
-      const template1 = provider.getTemplate('01_introduction_and_goals', 'de');
-      const template2 = provider.getTemplate('01_introduction_and_goals', 'De');
-      const template3 = provider.getTemplate('01_introduction_and_goals', 'DE');
+      const template1 = provider.getTemplateForFormat('01_introduction_and_goals', 'de', 'markdown');
+      const template2 = provider.getTemplateForFormat('01_introduction_and_goals', 'De', 'markdown');
+      const template3 = provider.getTemplateForFormat('01_introduction_and_goals', 'DE', 'markdown');
 
       // Assert
       expect(template1).toBe(template2);
@@ -98,7 +125,7 @@ describe('LocalizedTemplateProvider', () => {
     it('should work with all 12 sections', () => {
       // Act & Assert
       ALL_SECTIONS.forEach((section) => {
-        const template = provider.getTemplate(section, 'EN');
+        const template = provider.getTemplateForFormat(section, 'EN', 'markdown');
         expect(template).toBeTruthy();
         expect(template.length).toBeGreaterThan(0);
       });
@@ -109,7 +136,7 @@ describe('LocalizedTemplateProvider', () => {
       const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       // Act
-      const template = provider.getTemplate('01_introduction_and_goals', 'XX');
+      const template = provider.getTemplateForFormat('01_introduction_and_goals', 'XX', 'markdown');
 
       // Assert
       expect(template).toContain('English Template');
@@ -173,50 +200,70 @@ describe('LocalizedTemplateProvider', () => {
     });
   });
 
-  describe('getWorkflowGuide', () => {
-    it('should return workflow guide for specified language', () => {
+  describe('getWorkflowGuideForFormat', () => {
+    it('should return markdown workflow guide for specified language', () => {
       // Act
-      const guide = provider.getWorkflowGuide('DE');
+      const guide = provider.getWorkflowGuideForFormat('DE', 'markdown');
 
       // Assert
       expect(guide).toContain('German Workflow Guide');
+      expect(guide).toContain('#');
+    });
+
+    it('should return asciidoc workflow guide for specified language', () => {
+      // Act
+      const guide = provider.getWorkflowGuideForFormat('DE', 'asciidoc');
+
+      // Assert
+      expect(guide).toContain('German Workflow Guide');
+      expect(guide).toContain('=');
     });
 
     it('should return English guide when no language specified', () => {
       // Act
-      const guide = provider.getWorkflowGuide();
+      const guide = provider.getWorkflowGuideForFormat(undefined, 'markdown');
 
       // Assert
       expect(guide).toContain('English Workflow Guide');
     });
   });
 
-  describe('getReadmeContent', () => {
-    it('should return README for specified language', () => {
+  describe('getReadmeContentForFormat', () => {
+    it('should return markdown README for specified language', () => {
       // Act
-      const readme = provider.getReadmeContent('FR');
+      const readme = provider.getReadmeContentForFormat('FR', undefined, 'markdown');
 
       // Assert
       expect(readme).toContain('French README');
+      expect(readme).toContain('#');
+    });
+
+    it('should return asciidoc README for specified language', () => {
+      // Act
+      const readme = provider.getReadmeContentForFormat('FR', undefined, 'asciidoc');
+
+      // Assert
+      expect(readme).toContain('French README');
+      expect(readme).toContain('=');
     });
 
     it('should return English README when no language specified', () => {
       // Act
-      const readme = provider.getReadmeContent();
+      const readme = provider.getReadmeContentForFormat(undefined, undefined, 'markdown');
 
       // Assert
       expect(readme).toContain('English README');
     });
   });
 
-  describe('getTemplateWithConfig', () => {
+  describe('getTemplateWithConfigAndFormat', () => {
     it('should use language from config.yaml when no parameter specified', () => {
       // Arrange
       const configPath = join(tempDir, 'config.yaml');
       writeFileSync(configPath, 'language: DE\nprojectName: Test\n');
 
       // Act
-      const template = provider.getTemplateWithConfig('01_introduction_and_goals', tempDir);
+      const template = provider.getTemplateWithConfigAndFormat('01_introduction_and_goals', tempDir);
 
       // Assert
       expect(template).toContain('German Template');
@@ -228,7 +275,7 @@ describe('LocalizedTemplateProvider', () => {
       writeFileSync(configPath, 'language: DE\nprojectName: Test\n');
 
       // Act
-      const template = provider.getTemplateWithConfig('01_introduction_and_goals', tempDir, 'FR');
+      const template = provider.getTemplateWithConfigAndFormat('01_introduction_and_goals', tempDir, 'FR');
 
       // Assert
       expect(template).toContain('French Template');
@@ -240,7 +287,7 @@ describe('LocalizedTemplateProvider', () => {
       writeFileSync(configPath, 'projectName: Test\n');
 
       // Act
-      const template = provider.getTemplateWithConfig('01_introduction_and_goals', tempDir);
+      const template = provider.getTemplateWithConfigAndFormat('01_introduction_and_goals', tempDir);
 
       // Assert
       expect(template).toContain('English Template');
@@ -248,7 +295,7 @@ describe('LocalizedTemplateProvider', () => {
 
     it('should fall back to English when config file does not exist', () => {
       // Act
-      const template = provider.getTemplateWithConfig('01_introduction_and_goals', '/nonexistent/path');
+      const template = provider.getTemplateWithConfigAndFormat('01_introduction_and_goals', '/nonexistent/path');
 
       // Assert
       expect(template).toContain('English Template');
@@ -260,10 +307,34 @@ describe('LocalizedTemplateProvider', () => {
       writeFileSync(configPath, 'not: valid: yaml: content:::');
 
       // Act
-      const template = provider.getTemplateWithConfig('01_introduction_and_goals', tempDir);
+      const template = provider.getTemplateWithConfigAndFormat('01_introduction_and_goals', tempDir);
 
       // Assert
       expect(template).toContain('English Template');
+    });
+
+    it('should use format from config.yaml when no format parameter specified', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'language: EN\nformat: markdown\nprojectName: Test\n');
+
+      // Act
+      const template = provider.getTemplateWithConfigAndFormat('01_introduction_and_goals', tempDir);
+
+      // Assert
+      expect(template).toContain('#'); // Markdown heading
+    });
+
+    it('should override config format with parameter', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'language: EN\nformat: markdown\nprojectName: Test\n');
+
+      // Act
+      const template = provider.getTemplateWithConfigAndFormat('01_introduction_and_goals', tempDir, undefined, 'asciidoc');
+
+      // Assert
+      expect(template).toContain('='); // AsciiDoc heading
     });
   });
 
@@ -310,6 +381,126 @@ describe('LocalizedTemplateProvider', () => {
 
       // Assert
       expect(code).toBe('DE');
+    });
+  });
+
+  describe('readFormatFromConfig', () => {
+    it('should read format code from valid config', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'format: markdown\nprojectName: Test\n');
+
+      // Act
+      const format = provider.readFormatFromConfig(tempDir);
+
+      // Assert
+      expect(format).toBe('markdown');
+    });
+
+    it('should return undefined for missing config', () => {
+      // Act
+      const format = provider.readFormatFromConfig('/nonexistent/path');
+
+      // Assert
+      expect(format).toBeUndefined();
+    });
+
+    it('should return undefined for config without format', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'projectName: Test\n');
+
+      // Act
+      const format = provider.readFormatFromConfig(tempDir);
+
+      // Assert
+      expect(format).toBeUndefined();
+    });
+
+    it('should normalize format code to lowercase', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'format: ASCIIDOC\nprojectName: Test\n');
+
+      // Act
+      const format = provider.readFormatFromConfig(tempDir);
+
+      // Assert
+      expect(format).toBe('asciidoc');
+    });
+
+    it('should return undefined for invalid format values', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'format: invalid_format\nprojectName: Test\n');
+
+      // Act
+      const format = provider.readFormatFromConfig(tempDir);
+
+      // Assert
+      expect(format).toBeUndefined();
+    });
+
+    it('should return undefined for non-string format values', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'format: 123\nprojectName: Test\n');
+
+      // Act
+      const format = provider.readFormatFromConfig(tempDir);
+
+      // Assert
+      expect(format).toBeUndefined();
+    });
+
+    it('should handle format with whitespace', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'format: "  markdown  "\nprojectName: Test\n');
+
+      // Act
+      const format = provider.readFormatFromConfig(tempDir);
+
+      // Assert
+      expect(format).toBe('markdown');
+    });
+
+    it('should handle malformed config gracefully', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, ':::invalid yaml:::');
+
+      // Act
+      const format = provider.readFormatFromConfig(tempDir);
+
+      // Assert
+      expect(format).toBeUndefined();
+    });
+  });
+
+  describe('readLanguageFromConfig - edge cases', () => {
+    it('should return undefined for non-string language values', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'language: 123\nprojectName: Test\n');
+
+      // Act
+      const language = provider.readLanguageFromConfig(tempDir);
+
+      // Assert
+      expect(language).toBeUndefined();
+    });
+
+    it('should handle language with whitespace', () => {
+      // Arrange
+      const configPath = join(tempDir, 'config.yaml');
+      writeFileSync(configPath, 'language: "  de  "\nprojectName: Test\n');
+
+      // Act
+      const language = provider.readLanguageFromConfig(tempDir);
+
+      // Assert
+      expect(language).toBe('DE');
     });
   });
 

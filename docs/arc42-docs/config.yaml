@@ -1,9 +1,9 @@
 # arc42 Documentation Configuration
 projectName: Arc42 MCP Server
-version: 2.0.0
-created: 2026-02-11T16:26:14.042Z
-format: markdown
-language: en
+version: 2.1.0
+created: 2026-02-14T22:05:03.736Z
+format: asciidoc
+language: EN
 
 # arc42 Template Reference
 # This documents which version of the arc42 template this documentation is based on.

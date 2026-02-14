@@ -1,18 +1,25 @@
 import { z } from 'zod';
 import { ToolContext, ToolResponse } from '../types.js';
 import {
-  getWorkflowGuide,
+  getWorkflowGuideForFormat,
   SUPPORTED_LANGUAGE_CODES,
-  isLanguageCode,
   normalizeLanguageCode,
   getAvailableLanguages
 } from '../templates/index.js';
+import {
+  SUPPORTED_OUTPUT_FORMAT_CODES,
+  DEFAULT_OUTPUT_FORMAT,
+  type OutputFormatCode
+} from '../templates/formats/index.js';
 
 // Zod schema as the SINGLE SOURCE OF TRUTH for tool input
 const languageValues = SUPPORTED_LANGUAGE_CODES as unknown as [string, ...string[]];
 
+const formatValues = SUPPORTED_OUTPUT_FORMAT_CODES as unknown as [string, ...string[]];
+
 export const arc42WorkflowGuideInputSchema = {
-  language: z.enum(languageValues).optional().default('EN').describe('Language code for the workflow guide. Supported: EN, DE, ES, FR, IT, NL, PT, RU, CZ, UKR, ZH. Defaults to EN.')
+  language: z.enum(languageValues).optional().default('EN').describe('Language code for the workflow guide. Supported: EN, DE, ES, FR, IT, NL, PT, RU, CZ, UKR, ZH. Defaults to EN.'),
+  format: z.enum(formatValues).optional().describe('Output format for the workflow guide. Supported: markdown, asciidoc. Defaults to asciidoc.')
 };
 
 export const arc42WorkflowGuideDescription = `Get a comprehensive guide for arc42 architecture documentation workflow.
@@ -31,16 +38,10 @@ export async function arc42WorkflowGuideHandler(
   const languageArg = (args.language as string) ?? 'EN';
 
   // Validate and normalize language code
+  // normalizeLanguageCode throws for invalid codes, so we catch and return an error
   let language: string;
   try {
-    const normalizedLanguage = normalizeLanguageCode(languageArg);
-    if (!isLanguageCode(normalizedLanguage)) {
-      return {
-        success: false,
-        message: `Unsupported language code: ${languageArg}. Supported languages: ${SUPPORTED_LANGUAGE_CODES.join(', ')}`
-      };
-    }
-    language = normalizedLanguage;
+    language = normalizeLanguageCode(languageArg);
   } catch {
     return {
       success: false,
@@ -48,8 +49,11 @@ export async function arc42WorkflowGuideHandler(
     };
   }
 
-  // Get the localized workflow guide
-  const guide = getWorkflowGuide(language);
+  // Get format from args
+  const formatArg = (args.format as OutputFormatCode) ?? DEFAULT_OUTPUT_FORMAT;
+
+  // Get the localized workflow guide in the specified format
+  const guide = getWorkflowGuideForFormat(language, formatArg);
 
   // Get available languages for display
   const availableLanguages = getAvailableLanguages();
@@ -59,15 +63,18 @@ export async function arc42WorkflowGuideHandler(
 
   return {
     success: true,
-    message: `arc42 workflow guide loaded successfully (language: ${language})`,
+    message: `arc42 workflow guide loaded successfully (language: ${language}, format: ${formatArg})`,
     data: {
       guide,
       language: currentLanguageInfo,
+      format: formatArg,
       availableLanguages,
+      supportedFormats: SUPPORTED_OUTPUT_FORMAT_CODES,
+      defaultFormat: DEFAULT_OUTPUT_FORMAT,
       workspaceRoot: context.workspaceRoot
     },
     nextSteps: [
-      'Initialize arc42 documentation with: arc42-init',
+      `Initialize arc42 documentation with: arc42-init (default format: ${DEFAULT_OUTPUT_FORMAT})`,
       'Check current status with: arc42-status',
       'Generate section templates with: generate-template',
       'Update sections with: update-section'

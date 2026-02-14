@@ -18,9 +18,9 @@ function createMockStrategy(code: LanguageCode, name: string, nativeName: string
     nativeName,
     getSectionTitle: (section: Arc42Section) => ({ title: `${name} Title`, section }),
     getSectionDescription: (section: Arc42Section) => ({ description: `${name} Description`, section }),
-    getTemplate: (section: Arc42Section) => `# ${name} Template for ${section}`,
-    getWorkflowGuide: () => `# ${name} Workflow Guide`,
-    getReadmeContent: () => `# ${name} README`
+    getTemplateForFormat: (section: Arc42Section, _format) => `# ${name} Template for ${section}`,
+    getWorkflowGuideForFormat: (_format) => `# ${name} Workflow Guide`,
+    getReadmeContentForFormat: (_projectName, _format) => `# ${name} README`
   };
 }
 
@@ -325,6 +325,47 @@ describe('LanguageRegistry', () => {
 
       // Assert
       expect(result).toBe(registry);
+    });
+
+    it('should allow re-registration after clearing', () => {
+      // Arrange
+      registry.register(createMockStrategy('EN', 'English', 'English'));
+      registry.clear();
+
+      // Act
+      registry.register(createMockStrategy('DE', 'German', 'Deutsch'));
+
+      // Assert
+      expect(registry.size).toBe(1);
+      expect(registry.isSupported('DE')).toBe(true);
+      expect(registry.isSupported('EN')).toBe(false);
+    });
+  });
+
+  describe('getOrThrow - edge cases', () => {
+    it('should throw with "none" in message when registry is empty', () => {
+      // Act & Assert
+      expect(() => registry.getOrThrow('XX')).toThrow(/none/);
+    });
+
+    it('should include normalized code in error message', () => {
+      // Act & Assert
+      expect(() => registry.getOrThrow('  xx  ')).toThrow(/XX/);
+    });
+  });
+
+  describe('getAll - edge cases', () => {
+    it('should not be affected by modifying returned array', () => {
+      // Arrange
+      registry.register(createMockStrategy('EN', 'English', 'English'));
+      const all = registry.getAll();
+
+      // Act - modify returned array
+      all.push(createMockStrategy('DE', 'German', 'Deutsch'));
+
+      // Assert - original registry unchanged
+      expect(registry.size).toBe(1);
+      expect(registry.getAll()).toHaveLength(1);
     });
   });
 });

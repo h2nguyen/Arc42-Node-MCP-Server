@@ -21,9 +21,9 @@ describe('German Language Strategy', () => {
       expect(strategy.nativeName).toBe('Deutsch');
       expect(typeof strategy.getSectionTitle).toBe('function');
       expect(typeof strategy.getSectionDescription).toBe('function');
-      expect(typeof strategy.getTemplate).toBe('function');
-      expect(typeof strategy.getWorkflowGuide).toBe('function');
-      expect(typeof strategy.getReadmeContent).toBe('function');
+      expect(typeof strategy.getTemplateForFormat).toBe('function');
+      expect(typeof strategy.getWorkflowGuideForFormat).toBe('function');
+      expect(typeof strategy.getReadmeContentForFormat).toBe('function');
     });
 
     it('should have correct language properties', () => {
@@ -83,10 +83,10 @@ describe('German Language Strategy', () => {
     });
   });
 
-  describe('getTemplate', () => {
-    it('should return template for all 12 sections', () => {
+  describe('getTemplateForFormat', () => {
+    it('should return markdown template for all 12 sections', () => {
       ALL_SECTIONS.forEach((section) => {
-        const template = germanStrategy.getTemplate(section);
+        const template = germanStrategy.getTemplateForFormat(section, 'markdown');
 
         expect(template).toBeTruthy();
         expect(typeof template).toBe('string');
@@ -94,15 +94,32 @@ describe('German Language Strategy', () => {
       });
     });
 
-    it('should return templates with markdown headings', () => {
+    it('should return asciidoc template for all 12 sections', () => {
       ALL_SECTIONS.forEach((section) => {
-        const template = germanStrategy.getTemplate(section);
+        const template = germanStrategy.getTemplateForFormat(section, 'asciidoc');
+
+        expect(template).toBeTruthy();
+        expect(typeof template).toBe('string');
+        expect(template.length).toBeGreaterThan(100);
+      });
+    });
+
+    it('should return markdown templates with markdown headings', () => {
+      ALL_SECTIONS.forEach((section) => {
+        const template = germanStrategy.getTemplateForFormat(section, 'markdown');
         expect(template).toMatch(/^#/m);
       });
     });
 
-    it('should return German template content', () => {
-      const template = germanStrategy.getTemplate('01_introduction_and_goals');
+    it('should return asciidoc templates with asciidoc headings', () => {
+      ALL_SECTIONS.forEach((section) => {
+        const template = germanStrategy.getTemplateForFormat(section, 'asciidoc');
+        expect(template).toMatch(/^=/m);
+      });
+    });
+
+    it('should return German markdown template content', () => {
+      const template = germanStrategy.getTemplateForFormat('01_introduction_and_goals', 'markdown');
 
       // Should contain German words
       expect(template).toContain('Aufgabenstellung');
@@ -112,17 +129,30 @@ describe('German Language Strategy', () => {
 
     it('should not contain undefined or null values', () => {
       ALL_SECTIONS.forEach((section) => {
-        const template = germanStrategy.getTemplate(section);
-        expect(template).not.toContain('undefined');
-        expect(template).not.toContain('null');
-        expect(template).not.toContain('[object Object]');
+        const markdownTemplate = germanStrategy.getTemplateForFormat(section, 'markdown');
+        expect(markdownTemplate).not.toContain('undefined');
+        expect(markdownTemplate).not.toContain('null');
+        expect(markdownTemplate).not.toContain('[object Object]');
+
+        const asciidocTemplate = germanStrategy.getTemplateForFormat(section, 'asciidoc');
+        expect(asciidocTemplate).not.toContain('undefined');
+        expect(asciidocTemplate).not.toContain('null');
+        expect(asciidocTemplate).not.toContain('[object Object]');
       });
     });
   });
 
-  describe('getWorkflowGuide', () => {
-    it('should return workflow guide in German', () => {
-      const guide = germanStrategy.getWorkflowGuide();
+  describe('getWorkflowGuideForFormat', () => {
+    it('should return markdown workflow guide in German', () => {
+      const guide = germanStrategy.getWorkflowGuideForFormat('markdown');
+
+      expect(guide).toBeTruthy();
+      expect(typeof guide).toBe('string');
+      expect(guide.length).toBeGreaterThan(500);
+    });
+
+    it('should return asciidoc workflow guide in German', () => {
+      const guide = germanStrategy.getWorkflowGuideForFormat('asciidoc');
 
       expect(guide).toBeTruthy();
       expect(typeof guide).toBe('string');
@@ -130,7 +160,7 @@ describe('German Language Strategy', () => {
     });
 
     it('should contain German workflow content', () => {
-      const guide = germanStrategy.getWorkflowGuide();
+      const guide = germanStrategy.getWorkflowGuideForFormat('markdown');
 
       expect(guide).toContain('arc42');
       expect(guide).toContain('Erste Schritte');
@@ -138,9 +168,17 @@ describe('German Language Strategy', () => {
     });
   });
 
-  describe('getReadmeContent', () => {
-    it('should return README in German', () => {
-      const readme = germanStrategy.getReadmeContent();
+  describe('getReadmeContentForFormat', () => {
+    it('should return markdown README in German', () => {
+      const readme = germanStrategy.getReadmeContentForFormat(undefined, 'markdown');
+
+      expect(readme).toBeTruthy();
+      expect(typeof readme).toBe('string');
+      expect(readme.length).toBeGreaterThan(200);
+    });
+
+    it('should return asciidoc README in German', () => {
+      const readme = germanStrategy.getReadmeContentForFormat(undefined, 'asciidoc');
 
       expect(readme).toBeTruthy();
       expect(typeof readme).toBe('string');
@@ -148,11 +186,18 @@ describe('German Language Strategy', () => {
     });
 
     it('should contain German README content', () => {
-      const readme = germanStrategy.getReadmeContent();
+      const readme = germanStrategy.getReadmeContentForFormat(undefined, 'markdown');
 
       expect(readme).toContain('Architektur-Dokumentation');
       expect(readme).toContain('arc42');
       expect(readme).toContain('Abschnitte');
+    });
+
+    it('should include project name when provided', () => {
+      const projectName = 'Mein Test Projekt';
+      const readme = germanStrategy.getReadmeContentForFormat(projectName, 'markdown');
+
+      expect(readme).toContain(projectName);
     });
   });
 
@@ -167,7 +212,7 @@ describe('German Language Strategy', () => {
         return {
           code: strategy.code,
           title: strategy.getSectionTitle('01_introduction_and_goals').title,
-          template: strategy.getTemplate('01_introduction_and_goals')
+          template: strategy.getTemplateForFormat('01_introduction_and_goals', 'markdown')
         };
       }
 

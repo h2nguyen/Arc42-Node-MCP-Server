@@ -2,6 +2,20 @@
  * Core types for arc42 MCP server
  */
 
+// Re-export output format types for convenience
+export type {
+  OutputFormatStrategy,
+  OutputFormatCode
+} from './templates/formats/output-format-strategy.js';
+
+export {
+  SUPPORTED_OUTPUT_FORMAT_CODES,
+  OUTPUT_FORMAT_ALIASES,
+  DEFAULT_OUTPUT_FORMAT,
+  isOutputFormatCode,
+  normalizeOutputFormatCode
+} from './templates/formats/output-format-strategy.js';
+
 export interface ToolContext {
   projectPath: string;
   workspaceRoot: string;

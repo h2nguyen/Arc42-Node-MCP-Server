@@ -1,0 +1,178 @@
+= 6. Runtime View
+
+== 6.1 Server Startup Sequence
+
+[plantuml, startup-sequence, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+participant "MCP Client\n(Claude, etc.)" as Client
+participant "index.ts\n(Entry Point)" as Index
+participant "server.ts\nArc42Server" as Server
+participant "MCP SDK\nTransport" as SDK
+
+Client -> Index : Spawn process
+activate Index
+
+Index -> Index : Parse CLI args\n(projectPath)
+
+Index -> Server : new Arc42Server()
+activate Server
+
+Server -> SDK : Create McpServer
+activate SDK
+
+Index -> Server : initialize(path)
+Server -> SDK : registerTools()
+Server -> SDK : connect(transport)
+
+SDK --> Server : Transport Open
+deactivate SDK
+
+Server --> Index : Server Ready
+deactivate Server
+
+Index --> Client : Ready for tools
+deactivate Index
+@enduml
+----
+
+== 6.2 Tool Call Flow (Example: arc42-init)
+
+[plantuml, tool-call-flow, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+participant "MCP Client" as Client
+participant "MCP SDK" as SDK
+participant "arc42-init\nHandler" as Init
+participant "File System" as FS
+
+Client -> SDK : tools/call\n{arc42-init,\nprojectName,\nlanguage, format}
+activate SDK
+
+SDK -> SDK : Validate input\n(Zod schema)
+
+SDK -> Init : arc42InitHandler()
+activate Init
+
+Init -> FS : Check if exists
+FS --> Init
+
+Init -> FS : Create directories
+Init -> FS : Write config.yaml
+Init -> FS : Create 12 sections
+
+Init --> SDK : ToolResponse\n{success, data}
+deactivate Init
+
+SDK --> Client : {success: true}
+deactivate SDK
+@enduml
+----
+
+== 6.3 Documentation Workflow
+
+[plantuml, documentation-workflow, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+start
+
+:Workflow Guide;
+note right: arc42-workflow-guide
+
+:Init Workspace;
+note right: arc42-init with\nlanguage & format
+
+:Generate Template;
+note right: generate-template
+
+:Update Section;
+note right: update-section
+
+:Check Status;
+note right: arc42-status
+
+if (Complete?) then (yes)
+    stop
+else (no)
+    :Loop back to\nGenerate Template;
+    --> :Generate Template;
+endif
+@enduml
+----
+
+=== Typical User Journey
+
+. *User*: "Help me document my architecture"
+. *AI calls*: `arc42-workflow-guide` → Gets process overview
+. *AI calls*: `arc42-init { projectName: "My Project", format: "asciidoc" }` → Creates workspace
+. *AI calls*: `arc42-status` → Checks progress (0%)
+. *AI calls*: `generate-template { section: "01_introduction_and_goals" }` → Gets template
+. *AI discusses* with user to gather requirements
+. *AI calls*: `update-section { section: "01_...", content: "..." }` → Saves documentation
+. *AI calls*: `arc42-status` → Checks progress (~8%)
+. *Repeat* for each section...
+
+== 6.4 Error Handling Flow
+
+[plantuml, error-handling, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+participant "MCP Client" as Client
+participant "Tool Handler" as Handler
+participant "Response Builder" as Response
+
+Client -> Handler : Invalid request
+activate Handler
+
+Handler -> Handler : Zod validation\nfails
+
+Handler -> Response : Create error
+activate Response
+Response --> Handler : ToolResponse\n{success: false}
+deactivate Response
+
+Handler --> Client : {isError: true,\ncontent: [...]}
+deactivate Handler
+@enduml
+----
+
+== 6.5 Graceful Shutdown
+
+[plantuml, graceful-shutdown, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+participant "MCP Client" as Client
+participant "server.ts" as Server
+participant "MCP SDK" as SDK
+
+Client -> Server : Close connection
+activate Server
+
+SDK -> Server : transport.onclose
+
+Server -> Server : stop()\nisStopping = true
+
+Server -> SDK : mcpServer.close()
+activate SDK
+SDK --> Server
+deactivate SDK
+
+Server -> Server : process.exit(0)
+deactivate Server
+@enduml
+----

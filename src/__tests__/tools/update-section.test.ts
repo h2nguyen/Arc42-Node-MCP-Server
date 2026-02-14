@@ -98,8 +98,8 @@ describe('update-section', () => {
       expect(result.data.mode).toBe('replace');
       expect(result.data.wordCount).toBeGreaterThan(0);
 
-      // Verify file was written
-      const fileContent = await readFile(join(context.workspaceRoot, 'sections', `${sectionName}.md`), 'utf-8');
+      // Verify file was written (default format is AsciiDoc)
+      const fileContent = await readFile(join(context.workspaceRoot, 'sections', `${sectionName}.adoc`), 'utf-8');
       expect(fileContent).toBe(testContent);
     });
 
@@ -167,7 +167,7 @@ describe('update-section', () => {
 
       expect(result.success).toBe(true);
 
-      const fileContent = await readFile(join(context.workspaceRoot, 'sections', `${sectionName}.md`), 'utf-8');
+      const fileContent = await readFile(join(context.workspaceRoot, 'sections', `${sectionName}.adoc`), 'utf-8');
       expect(fileContent).toBe(content);
     });
 

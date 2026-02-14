@@ -19,9 +19,9 @@ function createMockStrategy(code: LanguageCode, name: string, nativeName: string
     nativeName,
     getSectionTitle: (section: Arc42Section) => ({ title: `${name} Title`, section }),
     getSectionDescription: (section: Arc42Section) => ({ description: `${name} Description`, section }),
-    getTemplate: (section: Arc42Section) => `# ${name} Template for ${section}`,
-    getWorkflowGuide: () => `# ${name} Workflow Guide`,
-    getReadmeContent: () => `# ${name} README`
+    getTemplateForFormat: (section: Arc42Section, _format) => `# ${name} Template for ${section}`,
+    getWorkflowGuideForFormat: (_format) => `# ${name} Workflow Guide`,
+    getReadmeContentForFormat: (_projectName, _format) => `# ${name} README`
   };
 }
 
@@ -214,6 +214,52 @@ describe('LanguageFactory', () => {
       // Assert - factory sees the new language
       expect(factory.isSupported('IT')).toBe(true);
       expect(factory.create('IT').name).toBe('Italian');
+    });
+  });
+
+  describe('error messages', () => {
+    it('should include "none" in error when no languages are available for createWithFallback', () => {
+      // Arrange
+      const emptyRegistry = new LanguageRegistry();
+      const emptyFactory = new LanguageFactory(emptyRegistry);
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // Act & Assert
+      expect(() => emptyFactory.createWithFallback('XX')).toThrow(/none/);
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should include "none" in error when no languages are available for getDefault', () => {
+      // Arrange
+      const emptyRegistry = new LanguageRegistry();
+      const emptyFactory = new LanguageFactory(emptyRegistry);
+
+      // Act & Assert
+      expect(() => emptyFactory.getDefault()).toThrow(/none/);
+    });
+
+    it('should include available languages in error for createWithFallback', () => {
+      // Arrange
+      const registryWithoutEnglish = new LanguageRegistry();
+      registryWithoutEnglish.register(createMockStrategy('DE', 'German', 'Deutsch'));
+      registryWithoutEnglish.register(createMockStrategy('FR', 'French', 'Français'));
+      const factoryWithoutEnglish = new LanguageFactory(registryWithoutEnglish);
+      const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      // Act & Assert
+      expect(() => factoryWithoutEnglish.createWithFallback('XX')).toThrow(/DE/);
+      expect(() => factoryWithoutEnglish.createWithFallback('XX')).toThrow(/FR/);
+      consoleWarnSpy.mockRestore();
+    });
+
+    it('should include available languages in error for getDefault', () => {
+      // Arrange
+      const registryWithoutEnglish = new LanguageRegistry();
+      registryWithoutEnglish.register(createMockStrategy('DE', 'German', 'Deutsch'));
+      const factoryWithoutEnglish = new LanguageFactory(registryWithoutEnglish);
+
+      // Act & Assert
+      expect(() => factoryWithoutEnglish.getDefault()).toThrow(/DE/);
     });
   });
 });

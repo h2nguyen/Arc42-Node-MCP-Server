@@ -8,16 +8,47 @@
  *
  * S.O.L.I.D Principles:
  * - LSP (Liskov Substitution Principle): GermanStrategy is substitutable for LanguageStrategy
- * - OCP (Open/Closed Principle): Implements interface without modifying it
+ * - OCP (Open/Closed Principle): New formats can be added via plugins without modifying this file
  *
  * Design Patterns:
  * - Strategy Pattern: Concrete implementation for German language
+ * - Plugin Pattern: Format-specific templates are provided via plugins
  */
 
-import type { Arc42Section } from '../../../types.js';
-import type { LanguageStrategy, SectionTitle, SectionDescription } from '../language-strategy.js';
 import { getSectionTitle, getSectionDescription } from './sections.js';
-import { getTemplate, getWorkflowGuide, getReadmeContent } from './templates.js';
+import {
+  getTemplate as getTemplateMarkdown,
+  getWorkflowGuide as getWorkflowGuideMarkdown,
+  getReadmeContent as getReadmeContentMarkdown
+} from './templates-markdown.js';
+import {
+  getTemplate as getTemplateAsciidoc,
+  getWorkflowGuide as getWorkflowGuideAsciidoc,
+  getReadmeContent as getReadmeContentAsciidoc
+} from './templates-asciidoc.js';
+import {
+  createLanguageStrategy,
+  createFormatPlugin,
+  type FormatTemplatePlugin
+} from '../language-strategy-factory.js';
+
+/**
+ * German Markdown format plugin
+ */
+export const germanMarkdownPlugin: FormatTemplatePlugin = createFormatPlugin(
+  getTemplateMarkdown,
+  getWorkflowGuideMarkdown,
+  getReadmeContentMarkdown
+);
+
+/**
+ * German AsciiDoc format plugin
+ */
+export const germanAsciidocPlugin: FormatTemplatePlugin = createFormatPlugin(
+  getTemplateAsciidoc,
+  getWorkflowGuideAsciidoc,
+  getReadmeContentAsciidoc
+);
 
 /**
  * German Language Strategy
@@ -25,38 +56,27 @@ import { getTemplate, getWorkflowGuide, getReadmeContent } from './templates.js'
  * Provides German translations for arc42 documentation.
  * Based on official arc42 German template from vendor/arc42-template/DE/.
  */
-export const germanStrategy: LanguageStrategy = {
+export const germanStrategy = createLanguageStrategy({
   code: 'DE',
   name: 'German',
   nativeName: 'Deutsch',
-
-  getSectionTitle(section: Arc42Section): SectionTitle {
-    return {
-      title: getSectionTitle(section),
-      section
-    };
-  },
-
-  getSectionDescription(section: Arc42Section): SectionDescription {
-    return {
-      description: getSectionDescription(section),
-      section
-    };
-  },
-
-  getTemplate(section: Arc42Section): string {
-    return getTemplate(section);
-  },
-
-  getWorkflowGuide(): string {
-    return getWorkflowGuide();
-  },
-
-  getReadmeContent(projectName?: string): string {
-    return getReadmeContent(projectName);
+  getSectionTitle,
+  getSectionDescription,
+  formatPlugins: {
+    markdown: germanMarkdownPlugin,
+    asciidoc: germanAsciidocPlugin
   }
-};
+});
 
 // Re-export for convenience
 export { getSectionTitle, getSectionDescription } from './sections.js';
-export { getTemplate, getWorkflowGuide, getReadmeContent } from './templates.js';
+export {
+  getTemplate as getTemplateMarkdown,
+  getWorkflowGuide as getWorkflowGuideMarkdown,
+  getReadmeContent as getReadmeContentMarkdown
+} from './templates-markdown.js';
+export {
+  getTemplate as getTemplateAsciidoc,
+  getWorkflowGuide as getWorkflowGuideAsciidoc,
+  getReadmeContent as getReadmeContentAsciidoc
+} from './templates-asciidoc.js';

@@ -1,0 +1,14 @@
+{
+  "filePath": ".spec-workflow/specs/multiple-output-formats/requirements.md",
+  "currentVersion": 1,
+  "snapshots": [
+    {
+      "version": 1,
+      "filename": "snapshot-001.json",
+      "timestamp": "2026-02-14T00:50:14.211Z",
+      "trigger": "initial",
+      "approvalId": "approval_1771030214194_ls9uc94kk",
+      "approvalTitle": "Requirements: Multiple Output Formats (Markdown + AsciiDoc)"
+    }
+  ]
+}

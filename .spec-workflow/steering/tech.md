@@ -43,7 +43,7 @@ The project follows a **tool-based plugin architecture** where each MCP tool is 
    - `update-section`: Content updates
    - `get-section`: Content retrieval
 
-3. **Templates**: Static arc42 templates stored as TypeScript modules with reference content
+3. **Templates & Localization**: Arc42 templates with multi-language support (11 languages) using the Strategy Pattern. Each language implements `LanguageStrategy` interface with localized section metadata and template content
 
 4. **Types System**: Centralized type definitions for arc42 sections, responses, and contexts
 
@@ -78,10 +78,10 @@ The project follows a **tool-based plugin architecture** where each MCP tool is 
   - `noImplicitReturns`, `noFallthroughCasesInSwitch`
 - **Testing Framework**: Vitest with V8 coverage
 - **Coverage Thresholds**:
-  - Statements: 70%
-  - Branches: 60%
-  - Functions: 70%
-  - Lines: 70%
+  - Statements: 80%
+  - Branches: 75%
+  - Functions: 90%
+  - Lines: 80%
 
 ### Version Control & Collaboration
 - **VCS**: Git with GitHub
@@ -358,10 +358,10 @@ describe('LanguageFactory', () => {
 
 | Metric     | Minimum | Target |
 |------------|---------|--------|
-| Statements | 70%     | 85%    |
-| Branches   | 60%     | 80%    |
-| Functions  | 70%     | 85%    |
-| Lines      | 70%     | 85%    |
+| Statements | 80%     | 90%    |
+| Branches   | 75%     | 85%    |
+| Functions  | 90%     | 95%    |
+| Lines      | 80%     | 90%    |
 
 ### Code Quality Standards
 
@@ -419,4 +419,4 @@ describe('LanguageFactory', () => {
 - **Node.js 24+ requirement**: Limits usage to environments with latest Node.js (needed for native ESM features)
 - **Single-user design**: No built-in multi-user collaboration or conflict resolution
 - **No diagram rendering**: Mermaid/PlantUML diagrams stored as text, rendering left to documentation viewers
-- **English-only templates**: Arc42 templates currently only in English (multi-language is a future enhancement)
+- **Markdown-only output**: Documentation output is currently limited to Markdown format (AsciiDoc and other formats are potential future enhancements)

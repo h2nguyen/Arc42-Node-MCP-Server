@@ -1,0 +1,259 @@
+= 7. Deployment View
+
+== 7.1 Infrastructure Overview
+
+The Arc42 MCP Server is designed to run locally on developer machines, integrated with MCP-compatible AI assistants.
+
+[plantuml, infrastructure-overview, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+rectangle "Developer Machine" {
+    rectangle "MCP Client Application" {
+        component "Claude Desktop" as CD
+        component "Cursor" as CU
+        component "Cline" as CL
+    }
+    
+    rectangle "Arc42 MCP Server Process" as Server #lightblue {
+        note right
+          node dist/index.js /path/to/project
+          
+          • Node.js 24+ runtime
+          • MCP SDK for protocol handling
+          • File system access for documentation
+        end note
+    }
+    
+    database "File System" as FS {
+        folder "/path/to/project/arc42-docs/" {
+            file "sections/*.adoc"
+            file "config.yaml"
+            folder "images/"
+        }
+    }
+    
+    CD --> Server : STDIO (spawn)
+    CU --> Server : STDIO (spawn)
+    CL --> Server : STDIO (spawn)
+    Server --> FS : File I/O
+}
+@enduml
+----
+
+== 7.2 Deployment Scenarios
+
+=== Scenario 1: npm Global Installation (Recommended)
+
+[source,bash]
+----
+# Installation
+npm install -g @h2nguyen/arc42-node-mcp-server
+
+# Verification
+which arc42-mcp
+# → /usr/local/bin/arc42-mcp (or ~/.npm-global/bin/arc42-mcp)
+----
+
+*MCP Client Configuration:*
+[source,json]
+----
+{
+  "mcpServers": {
+    "arc42-mcp-server": {
+      "command": "arc42-mcp",
+      "args": ["/path/to/project"]
+    }
+  }
+}
+----
+
+=== Scenario 2: Local Development Build
+
+[source,bash]
+----
+# Clone and build
+git clone --recurse-submodules https://github.com/h2nguyen/Arc42-Node-MCP-Server.git
+cd Arc42-Node-MCP-Server
+npm install
+npm run build
+----
+
+*MCP Client Configuration:*
+[source,json]
+----
+{
+  "mcpServers": {
+    "arc42-mcp-server": {
+      "command": "node",
+      "args": ["/full/path/to/dist/index.js", "/path/to/project"]
+    }
+  }
+}
+----
+
+=== Scenario 3: Docker Container
+
+[source,bash]
+----
+# Build image
+docker build -t arc42-node-mcp-server .
+
+# Run with mounted project
+docker run -v /path/to/project:/project arc42-node-mcp-server
+----
+
+== 7.3 Docker Deployment
+
+[plantuml, docker-deployment, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+rectangle "Docker Container\n(arc42-node-mcp-server)" {
+    rectangle "FROM node:24-alpine" {
+        folder "/app/" {
+            folder "dist/" as Dist
+            file "package.json"
+            folder "vendor/" as Vendor
+        }
+        
+        note bottom of Dist
+          Built JavaScript
+        end note
+        
+        note bottom of Vendor
+          arc42 template submodule
+        end note
+    }
+    
+    component "ENTRYPOINT\n[\"node\", \"dist/index.js\"]" as Entry
+    
+    folder "Volume Mounts" as VM {
+        note right
+          /project ←── Host: /path/to/project
+        end note
+    }
+}
+@enduml
+----
+
+== 7.4 CI/CD Pipeline
+
+[plantuml, cicd-pipeline, svg]
+----
+@startuml
+!theme plain
+skinparam backgroundColor transparent
+
+rectangle "GitHub Actions Pipeline" {
+    rectangle "Lint" as Lint
+    rectangle "Test" as Test
+    rectangle "Docker\nBuild" as Docker
+    rectangle "Security\nAudit" as Security
+
+    Lint --> Test
+    Test --> Docker
+    Docker --> Security
+
+    rectangle "Matrix Testing" as Matrix {
+        component "Node 22" as N22
+        component "Node 24" as N24
+    }
+
+    Test --> Matrix
+}
+
+note bottom of Lint
+  tsc
+  eslint
+end note
+
+note bottom of Test
+  vitest
+  coverage
+end note
+
+note bottom of Docker
+  docker
+  build
+end note
+
+note bottom of Security
+  npm audit
+end note
+@enduml
+----
+
+== 7.5 Node/Environment Mapping
+
+[cols="2,2,2,3", options="header"]
+|===
+| Environment | Node Version | Distribution | Usage
+
+| *Development*
+| 24.x (via .nvmrc)
+| Source + tsx
+| Live development
+
+| *Production*
+| 24+
+| npm package
+| End users
+
+| *Docker*
+| 24-alpine
+| Container image
+| Isolated deployment
+
+| *CI/CD*
+| 22, 24 (matrix)
+| GitHub Actions
+| Testing compatibility
+|===
+
+== 7.6 Configuration Files
+
+=== MCP Client Configurations
+
+[cols="2,4", options="header"]
+|===
+| Client | Config File Location
+
+| Claude Desktop (macOS)
+| `~/Library/Application Support/Claude/claude_desktop_config.json`
+
+| Claude Desktop (Windows)
+| `%APPDATA%\Claude\claude_desktop_config.json`
+
+| Cursor
+| Project `.cursor/mcp.json` or settings
+
+| Cline
+| `~/.cline/data/settings/cline_mcp_settings.json`
+|===
+
+=== Project Configuration
+
+[cols="2,4", options="header"]
+|===
+| File | Purpose
+
+| `.nvmrc`
+| Node.js version (24)
+
+| `tsconfig.json`
+| TypeScript compiler options
+
+| `vitest.config.ts`
+| Test configuration
+
+| `Dockerfile`
+| Container build instructions
+
+| `docker-compose.yml`
+| Development/testing services
+|===
