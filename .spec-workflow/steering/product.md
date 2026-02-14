@@ -80,3 +80,4 @@ The core problem it solves: Creating and maintaining software architecture docum
 - **Validation Tools**: Automated checks for documentation completeness and consistency
 - **Team Collaboration**: Multi-user editing with conflict resolution for team documentation efforts
 - **CI/CD Integration**: Hooks for validating documentation as part of build pipelines
+- **Expert Tips Integration**: Provide curated tips and advice from architecture experts for each arc42 section and subsection, helping users enrich their documentation with industry best practices, common pitfalls to avoid, and proven approaches for creating more useful and reliable architecture content
