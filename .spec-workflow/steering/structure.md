@@ -19,17 +19,28 @@ Arc42-Node-MCP-Server/
 │   ├── templates/             # Arc42 template content & localization
 │   │   ├── index.ts           # Template exports & public API
 │   │   ├── arc42-reference.ts # Arc42 version information
+│   │   ├── formats/           # Multi-format support (Strategy Pattern)
+│   │   │   ├── index.ts       # Format barrel exports & utilities
+│   │   │   ├── output-format-strategy.ts  # OutputFormatStrategy interface
+│   │   │   ├── output-format-factory.ts   # Factory for creating strategies
+│   │   │   ├── output-format-registry.ts  # Registry for format strategies
+│   │   │   ├── markdown/      # Markdown format implementation
+│   │   │   │   └── markdown-format-strategy.ts
+│   │   │   └── asciidoc/      # AsciiDoc format implementation
+│   │   │       └── asciidoc-format-strategy.ts
 │   │   └── locales/           # Multi-language support (Strategy Pattern)
 │   │       ├── index.ts       # Locale barrel exports
-│   │       ├── language-strategy.ts   # LanguageStrategy interface
-│   │       ├── language-factory.ts    # Factory for creating strategies
-│   │       ├── language-registry.ts   # Registry for language strategies
-│   │       ├── template-provider.ts   # Unified template access API
+│   │       ├── language-strategy.ts       # LanguageStrategy interface (format-aware)
+│   │       ├── language-factory.ts        # Factory for creating strategies
+│   │       ├── language-registry.ts       # Registry for language strategies
+│   │       ├── language-strategy-factory.ts # Plugin-based strategy factory
+│   │       ├── template-provider.ts       # Unified template access API
 │   │       ├── en/            # English (default)
-│   │       │   ├── index.ts   # English strategy export
+│   │       │   ├── index.ts   # English strategy export (uses plugin architecture)
 │   │       │   ├── sections.ts # Section metadata
-│   │       │   └── templates.ts # Template content
-│   │       ├── de/            # German
+│   │       │   ├── templates-markdown.ts  # Markdown templates
+│   │       │   └── templates-asciidoc.ts  # Native AsciiDoc templates
+│   │       ├── de/            # German (same structure)
 │   │       ├── es/            # Spanish
 │   │       ├── fr/            # French
 │   │       ├── it/            # Italian
@@ -42,7 +53,9 @@ Arc42-Node-MCP-Server/
 │   └── __tests__/             # Test files (mirrors source structure)
 │       ├── fixtures/
 │       ├── templates/
+│       │   ├── formats/       # Output format tests
 │       │   └── locales/       # Language strategy tests
+│       ├── integration/       # Integration tests (format-language combinations)
 │       └── tools/
 ├── dist/                       # Compiled JavaScript output
 ├── docs/                       # Documentation
@@ -209,7 +222,7 @@ The multi-language support uses the **Strategy Pattern** for clean separation an
 ┌─────────────────────────────────────────────────────────────────┐
 │ TemplateProvider                                                │
 │ - Unified API for accessing templates                           │
-│ - Handles language fallback (requested → EN)                    │
+│ - Handles language and format selection                         │
 │ - Uses LanguageFactory to get strategies                        │
 └─────────────────────┬───────────────────────────────────────────┘
                       │
@@ -226,51 +239,108 @@ The multi-language support uses the **Strategy Pattern** for clean separation an
 └─────────────────────┬───────────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────────┐
-│ LanguageStrategy (Interface)                                    │
-│ - getLanguageCode(): SupportedLanguage                          │
-│ - getSectionMetadata(): Arc42Section[]                          │
-│ - getTemplate(section): string                                  │
-│ - getWorkflowGuide(): string                                    │
+│ LanguageStrategy (Interface) - Format-Aware                     │
+│ - code: LanguageCode                                            │
+│ - getSectionTitle(section): SectionTitle                        │
+│ - getTemplateForFormat(section, format): string                 │
+│ - getWorkflowGuideForFormat(format): string                     │
+│ - getReadmeContentForFormat(projectName, format): string        │
 └─────────────────────────────────────────────────────────────────┘
           │
           ├── EnglishStrategy (EN - default)
           ├── GermanStrategy (DE)
-          ├── SpanishStrategy (ES)
-          ├── FrenchStrategy (FR)
-          ├── ItalianStrategy (IT)
-          ├── DutchStrategy (NL)
-          ├── PortugueseStrategy (PT)
-          ├── RussianStrategy (RU)
-          ├── CzechStrategy (CZ)
-          ├── UkrainianStrategy (UKR)
-          └── ChineseStrategy (ZH)
+          ├── ... (11 languages total)
+          │
+          │   Each language uses FormatTemplatePlugin:
+          │   ┌─────────────────────────────────────────┐
+          │   │ FormatTemplatePlugin (per format)       │
+          │   │ - getTemplate(section): string          │
+          │   │ - getWorkflowGuide(): string            │
+          │   │ - getReadmeContent(name?): string       │
+          │   └─────────────────────────────────────────┘
+          │         │
+          │         ├── markdownPlugin (templates-markdown.ts)
+          │         └── asciidocPlugin (templates-asciidoc.ts)
 ```
 
 ### Supported Languages
-| Code | Language   | Status     |
-|------|------------|------------|
-| EN   | English    | Complete   |
-| DE   | German     | Complete   |
-| ES   | Spanish    | Complete   |
-| FR   | French     | Complete   |
-| IT   | Italian    | Complete   |
-| NL   | Dutch      | Complete   |
-| PT   | Portuguese | Complete   |
-| RU   | Russian    | Complete   |
-| CZ   | Czech      | Complete   |
-| UKR  | Ukrainian  | Complete   |
-| ZH   | Chinese    | Complete   |
+| Code | Language   | Markdown | AsciiDoc |
+|------|------------|----------|----------|
+| EN   | English    | ✅       | ✅       |
+| DE   | German     | ✅       | ✅       |
+| ES   | Spanish    | ✅       | ✅       |
+| FR   | French     | ✅       | ✅       |
+| IT   | Italian    | ✅       | ✅       |
+| NL   | Dutch      | ✅       | ✅       |
+| PT   | Portuguese | ✅       | ✅       |
+| RU   | Russian    | ✅       | ✅       |
+| CZ   | Czech      | ✅       | ✅       |
+| UKR  | Ukrainian  | ✅       | ✅       |
+| ZH   | Chinese    | ✅       | ✅       |
 
 ### Adding a New Language
 
 1. Create language directory: `src/templates/locales/[code]/`
-2. Add three files:
-   - `index.ts` - Export the strategy
+2. Add four files:
+   - `index.ts` - Export the strategy (uses `createLanguageStrategy`)
    - `sections.ts` - Localized section metadata
-   - `templates.ts` - Localized template content
+   - `templates-markdown.ts` - Markdown template content
+   - `templates-asciidoc.ts` - Native AsciiDoc template content
 3. Register in `src/templates/locales/index.ts`
 4. Add tests in `src/__tests__/templates/locales/[code]/`
-5. Update `SupportedLanguage` type in `types.ts`
+5. Update `LanguageCode` type in language-strategy.ts
+
+## Multi-Format Architecture (v2.1.0+)
+
+The multi-format support uses the **Strategy Pattern** and **Plugin Pattern** for extensibility.
+
+### Format Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│ OutputFormatFactory                                             │
+│ - Creates OutputFormatStrategy instances                        │
+│ - Normalizes format codes and aliases                           │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────────┐
+│ OutputFormatRegistry                                            │
+│ - Stores registered format strategies                           │
+│ - O(1) lookup by format code                                    │
+└─────────────────────┬───────────────────────────────────────────┘
+                      │
+┌─────────────────────▼───────────────────────────────────────────┐
+│ OutputFormatStrategy (Interface)                                │
+│ - code: OutputFormatCode                                        │
+│ - fileExtension: string                                         │
+│ - formatHeading(text, level): string                            │
+│ - formatTable(headers, rows): string                            │
+│ - formatCode(code, language?): string                           │
+│ - ... (formatting methods)                                      │
+└─────────────────────────────────────────────────────────────────┘
+          │
+          ├── MarkdownFormatStrategy
+          │   - code: 'markdown'
+          │   - fileExtension: '.md'
+          │
+          └── AsciiDocFormatStrategy
+              - code: 'asciidoc'
+              - fileExtension: '.adoc'
+```
+
+### Supported Formats
+| Code       | Format   | Extension | Aliases                       |
+|------------|----------|-----------|-------------------------------|
+| `asciidoc` | AsciiDoc | `.adoc`   | adoc, ascii, asciidoctor, asc |
+| `markdown` | Markdown | `.md`     | md, mdown, mkd                |
+
+### Adding a New Format
+
+1. Create format directory: `src/templates/formats/[format]/`
+2. Implement `OutputFormatStrategy` interface
+3. Register in `src/templates/formats/index.ts`
+4. Add `FormatTemplatePlugin` implementations for each language
+5. Add tests in `src/__tests__/templates/formats/[format]/`
 
 ## Code Size Guidelines
 
@@ -290,6 +360,15 @@ src/__tests__/
 ├── templates/
 │   ├── arc42-reference.test.ts      # Template version tests
 │   ├── index.test.ts                # Template export tests
+│   ├── formats/                     # Multi-format support tests
+│   │   ├── index.test.ts            # Format barrel export tests
+│   │   ├── output-format-strategy.test.ts   # Strategy interface tests
+│   │   ├── output-format-registry.test.ts   # Registry tests
+│   │   ├── output-format-factory.test.ts    # Factory pattern tests
+│   │   ├── markdown/
+│   │   │   └── markdown-format-strategy.test.ts
+│   │   └── asciidoc/
+│   │       └── asciidoc-strategy.test.ts
 │   └── locales/                     # Multi-language support tests
 │       ├── all-strategies.test.ts   # Parameterized tests for all languages
 │       ├── language-factory.test.ts # Factory pattern tests
@@ -300,6 +379,8 @@ src/__tests__/
 │       │   └── english-strategy.test.ts # English-specific tests
 │       └── de/
 │           └── german-strategy.test.ts  # German-specific tests
+├── integration/                     # Integration tests
+│   └── output-format-integration.test.ts # Format-language combinations
 ├── tools/
 │   ├── arc42-init.test.ts           # Each tool has dedicated test file
 │   ├── arc42-status.test.ts
