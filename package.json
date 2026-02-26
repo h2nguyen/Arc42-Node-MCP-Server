@@ -44,7 +44,17 @@
     "email": "me@viethainguyen.de",
     "url": "https://github.com/h2nguyen"
   },
-  "license": "Apache-2.0",
+  "license": "(Apache-2.0 AND CC-BY-SA-4.0)",
+  "licenses": [
+    {
+      "type": "Apache-2.0",
+      "url": "https://github.com/h2nguyen/Arc42-Node-MCP-Server/blob/main/LICENSE"
+    },
+    {
+      "type": "CC-BY-SA-4.0",
+      "url": "https://github.com/h2nguyen/Arc42-Node-MCP-Server/blob/main/LICENSE-ARC42"
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/h2nguyen/Arc42-Node-MCP-Server.git"
