@@ -5,6 +5,15 @@ All notable changes to the arc42 MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.1] - 2026-02-26
+
+### Security
+- Remove direct system shell access to eliminate code execution risk
+
+### Changed
+- Mark dependencies as peer in package-lock.json
+- Update dependencies in package-lock.json (balanced-match, brace-expansion, minimatch) to latest versions
+
 ## [2.1.0] - 2026-02-14
 
 ### Added
