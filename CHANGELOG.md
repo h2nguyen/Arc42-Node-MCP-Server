@@ -5,6 +5,26 @@ All notable changes to the arc42 MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-03-09
+
+### Added
+- **Claude Skill for Arc42**: Pre-built Claude skill (`.claude/skills/arc42-docs-mcp/`) that teaches Claude how to effectively use the arc42 MCP server tools
+  - `SKILL.md` with workflows, tool reference, and behavioral guidelines
+  - Reference documents for setup and practical usage examples (8 scenarios)
+  - Can be copied or symlinked into other projects for automatic arc42 documentation assistance
+- **Project CLAUDE.md**: Added project-level instructions for Claude Code with build commands, code conventions, architecture overview, and key constraints
+- **Dependency Review Configuration**: Added `.github/dependency-review-config.yml` with allowed license list (Apache-2.0, MIT, ISC, BSD, CC-BY-SA-4.0, CC0-1.0, 0BSD)
+
+### Changed
+- Updated license metadata in `package.json` to SPDX expression `(Apache-2.0 AND CC-BY-SA-4.0)` with explicit dual-license entries for Apache-2.0 (code) and CC-BY-SA-4.0 (arc42 template content)
+
+### Security
+- Bump `express-rate-limit` from 8.2.1 to 8.3.1 in the npm_and_yarn group
+- Bump `hono` from 4.12.3 to 4.12.5 and `@hono/node-server` from 1.19.9 to 1.19.10
+
+### Documentation
+- Added "Claude Skill for Arc42" section to README with installation instructions, skill triggers, and benefits comparison table
+
 ## [2.1.1] - 2026-02-26
 
 ### Security
