@@ -1,0 +1,11 @@
+version: 2
+
+issueRules:
+  # This MCP server requires filesystem access to read/write arc42 architecture
+  # documentation files. This is core functionality, not a security concern.
+  fsAccess: false
+
+  # The CC-BY-SA-4.0 license applies only to bundled arc42 template content
+  # (third-party), not to the server code itself (Apache-2.0).
+  # See NOTICE and LICENSE-ARC42 for details.
+  copyleftLicense: false
