@@ -5,6 +5,12 @@ All notable changes to the arc42 MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-03-09
+
+### Changed
+- Simplified license metadata in `package.json` to `Apache-2.0` — the CC-BY-SA-4.0 for bundled arc42 template content is documented separately in `NOTICE` and `LICENSE-ARC42`
+- Added Socket.dev configuration (`socket.yml`) to suppress expected alerts for filesystem access (core functionality) and copyleft license (third-party arc42 template content only)
+
 ## [2.2.0] - 2026-03-09
 
 ### Added
