@@ -49,6 +49,11 @@ A Model Context Protocol (MCP) server that helps you create comprehensive archit
 * [🎯 Best Practices](#-best-practices)
   * [For AI Assistants](#for-ai-assistants)
   * [For Users](#for-users)
+* [🧠 Claude Skill for Arc42](#-claude-skill-for-arc42)
+  * [What Is the Arc42 Skill?](#what-is-the-arc42-skill)
+  * [Installing the Skill in Other Projects](#installing-the-skill-in-other-projects)
+  * [Skill Triggers](#skill-triggers)
+  * [Benefits for Your Projects](#benefits-for-your-projects)
 * [🔧 Development](#-development)
   * [Development Methodology](#development-methodology)
   * [Documentation Quality Assurance](#documentation-quality-assurance)
@@ -704,6 +709,77 @@ your-project/
 3. **Focus on decisions**: Document WHY, not just WHAT
 4. **Keep it current**: Update as architecture evolves
 5. **Use version control**: Commit your arc42-docs directory to Git
+
+## 🧠 Claude Skill for Arc42
+
+This project includes a pre-built **Claude Skill** that teaches Claude (via [Claude Code](https://docs.anthropic.com/en/docs/claude-code) or any skill-aware Claude integration) how to effectively use the arc42 MCP server tools for architecture documentation — without manual prompting.
+
+### What Is the Arc42 Skill?
+
+The skill is a structured knowledge package located at `.claude/skills/arc42-docs-mcp/` containing:
+
+```
+.claude/skills/arc42-docs-mcp/
+├── SKILL.md              # Skill definition with workflows, tool reference, and behavioral guidelines
+└── references/
+    ├── setup.md          # MCP server installation and configuration for all clients
+    └── examples.md       # Practical usage examples (8 scenarios)
+```
+
+When present in a project, Claude automatically loads the skill and understands:
+
+- The correct **workflow order** for arc42 documentation (guide → init → status → template → write → review)
+- **All 6 MCP tools**, their parameters, and expected responses
+- **Best practices** such as always generating a template before writing, using append mode for ADRs, and asking clarifying questions before assuming project details
+- The **recommended documentation order** (Section 1 → 3 → 4 → 5 → 9, then fill the remaining sections)
+
+### Installing the Skill in Other Projects
+
+To enable the arc42 skill in any project where Claude Code is used:
+
+**Option 1: Copy the skill directory**
+
+```bash
+# From your project root
+mkdir -p .claude/skills
+cp -r /path/to/Arc42-Node-MCP-Server/.claude/skills/arc42-docs-mcp .claude/skills/
+```
+
+**Option 2: Symlink (keeps the skill up-to-date)**
+
+```bash
+# From your project root
+mkdir -p .claude/skills
+ln -s /path/to/Arc42-Node-MCP-Server/.claude/skills/arc42-docs-mcp .claude/skills/arc42-docs-mcp
+```
+
+> **Prerequisite**: The arc42 MCP server must also be configured in your project's MCP settings (`.mcp.json`, Claude Desktop config, etc.). The skill teaches Claude *how* to use the tools, but the MCP server must be running to provide them. See [Setup in Claude Desktop](#setup-in-claude-desktop), [Setup in Cursor](#setup-in-cursor), or [Setup in Cline](#setup-in-cline) for server configuration.
+
+After installation, commit the `.claude/skills/arc42-docs-mcp/` directory to version control so all team members benefit from the skill automatically.
+
+### Skill Triggers
+
+Claude activates the arc42 skill when it detects any of the following in conversation:
+
+| Trigger                             | Examples                                                                                     |
+|-------------------------------------|----------------------------------------------------------------------------------------------|
+| Architecture documentation keywords | "create architecture documentation", "document the architecture", "update architecture docs" |
+| Arc42 references                    | "arc42", "initialize arc42", "arc42 template"                                                |
+| Section-specific requests           | "document the deployment view", "add quality requirements", "describe the building blocks"   |
+| ADR mentions                        | "add an Architecture Decision Record", "document why we chose PostgreSQL"                    |
+| Any of the 12 arc42 sections        | Introduction and Goals, Constraints, Context and Scope, Solution Strategy, etc.              |
+
+### Benefits for Your Projects
+
+| Benefit                | Without Skill                                     | With Skill                                                                        |
+|------------------------|---------------------------------------------------|-----------------------------------------------------------------------------------|
+| **Workflow knowledge** | Must manually prompt Claude to follow arc42 order | Claude automatically follows guide → init → template → write workflow             |
+| **Tool usage**         | May call tools incorrectly or skip steps          | Calls the right tools with correct parameters in the right sequence               |
+| **Content quality**    | Generic documentation output                      | Generates templates first, asks clarifying questions, documents WHY not just WHAT |
+| **ADR handling**       | Risk of overwriting existing decisions            | Always reads existing ADRs first and uses append mode                             |
+| **Format awareness**   | May mix AsciiDoc and Markdown syntax              | Checks `arc42-status` for configured format and writes consistently               |
+| **Multi-language**     | Defaults to English only                          | Respects configured language across all tool calls                                |
+| **Team consistency**   | Each developer gets different results             | Shared skill in version control ensures consistent documentation quality          |
 
 ## 🔧 Development
 
