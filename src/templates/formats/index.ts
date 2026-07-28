@@ -27,6 +27,7 @@ export {
   SUPPORTED_OUTPUT_FORMAT_CODES,
   OUTPUT_FORMAT_ALIASES,
   DEFAULT_OUTPUT_FORMAT,
+  FORMAT_INPUT_VALUES,
   isOutputFormatCode,
   normalizeOutputFormatCode
 } from './output-format-strategy.js';

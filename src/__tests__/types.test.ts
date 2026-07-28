@@ -10,6 +10,7 @@ import {
   ARC42_SECTIONS,
   SECTION_METADATA,
   getErrorMessage,
+  countWords,
   type ToolResponse,
   type MCPToolResponse
 } from '../types.js';
@@ -272,6 +273,28 @@ describe('types.ts', () => {
       expect(response.content).toBeInstanceOf(Array);
       expect(response.content[0].type).toBe('text');
       expect(typeof response.isError).toBe('boolean');
+    });
+  });
+
+  describe('countWords', () => {
+    it('should count words separated by single spaces', () => {
+      expect(countWords('one two three')).toBe(3);
+    });
+
+    it('should return 0 for empty string', () => {
+      expect(countWords('')).toBe(0);
+    });
+
+    it('should return 0 for whitespace-only string', () => {
+      expect(countWords('  \n\t ')).toBe(0);
+    });
+
+    it('should ignore leading and trailing whitespace', () => {
+      expect(countWords('  one two  \n')).toBe(2);
+    });
+
+    it('should treat consecutive whitespace as one separator', () => {
+      expect(countWords('one\n\ntwo\t three')).toBe(3);
     });
   });
 });

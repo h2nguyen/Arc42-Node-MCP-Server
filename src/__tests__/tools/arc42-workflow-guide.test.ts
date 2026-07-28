@@ -260,6 +260,20 @@ describe('arc42-workflow-guide', () => {
         expect(result.message).toContain('markdown');
       });
 
+      it('should accept the md alias and normalize it to markdown', async () => {
+        const result = await arc42WorkflowGuideHandler({ format: 'md' }, context);
+
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('markdown');
+      });
+
+      it('should accept the adoc alias and normalize it to asciidoc', async () => {
+        const result = await arc42WorkflowGuideHandler({ format: 'adoc' }, context);
+
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('asciidoc');
+      });
+
       it('should accept asciidoc format', async () => {
         // Arrange & Act
         const result = await arc42WorkflowGuideHandler({ format: 'asciidoc' }, context);

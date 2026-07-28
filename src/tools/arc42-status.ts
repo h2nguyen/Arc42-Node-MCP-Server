@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ToolContext, ToolResponse, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
+import { ToolContext, ToolResponse, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage, countWords } from '../types.js';
 import {
   ARC42_REFERENCE,
   templateProvider,
@@ -21,9 +21,14 @@ export const arc42StatusInputSchema = {
 
 export const arc42StatusDescription = `Check the status of arc42 documentation.
 
-This tool provides an overview of which sections have been created, their completion status, and overall progress. Use this tool to track documentation progress and identify which sections need attention.
+This tool reports which of the 12 sections have content (word counts, completeness 0-100%, last modified), overall progress, and the workspace's configured language and output format.
 
-You can optionally specify a targetFolder to check documentation status in a specific directory instead of the default workspace.`;
+Use this tool:
+- To assess an existing workspace before making changes
+- To discover the configured language and format BEFORE writing content with update-section, so the content matches
+- After writing sections, to track progress and identify which sections need attention
+
+This tool is read-only. It returns an error if the workspace is not initialized — run arc42-init first in that case. You can optionally specify a targetFolder to check documentation status in a specific directory instead of the default workspace.`;
 
 /**
  * Find section file with any supported format extension
@@ -186,10 +191,10 @@ export async function arc42StatusHandler(
       if (sectionFile) {
         const stats = statSync(sectionFile.path);
         const content = readFileSync(sectionFile.path, 'utf-8');
-        const wordCount = content.split(/\s+/).length;
+        const wordCount = countWords(content);
 
-        // Simple completeness heuristic: >50 words = some content
-        const completeness = Math.min(100, Math.floor((wordCount / 100) * 100));
+        // Heuristic: completeness equals the word count capped at 100 (100+ words = 100%)
+        const completeness = Math.min(100, wordCount);
 
         status.sections[section] = {
           exists: true,

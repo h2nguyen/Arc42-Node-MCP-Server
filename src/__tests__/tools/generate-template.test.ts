@@ -339,5 +339,47 @@ describe('generate-template', () => {
         }
       );
     });
+
+    describe('format parameter handling', () => {
+      it('should default to asciidoc when no format specified', async () => {
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals'
+        }, context);
+
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('asciidoc');
+      });
+
+      it('should accept markdown format', async () => {
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals',
+          format: 'markdown'
+        }, context);
+
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('markdown');
+        expect(result.data.fileExtension).toBe('.md');
+      });
+
+      it('should accept the md alias and normalize it to markdown', async () => {
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals',
+          format: 'md'
+        }, context);
+
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('markdown');
+      });
+
+      it('should accept the adoc alias and normalize it to asciidoc', async () => {
+        const result = await generateTemplateHandler({
+          section: '01_introduction_and_goals',
+          format: 'adoc'
+        }, context);
+
+        expect(result.success).toBe(true);
+        expect(result.data.format).toBe('asciidoc');
+      });
+    });
   });
 });

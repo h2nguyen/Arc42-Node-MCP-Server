@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ToolContext, ToolResponse, Arc42Section, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
+import { ToolContext, ToolResponse, Arc42Section, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage, countWords } from '../types.js';
 import {
   templateProvider,
   type OutputFormatCode
@@ -19,9 +19,14 @@ export const getSectionInputSchema = {
 
 export const getSectionDescription = `Read content from a specific arc42 section.
 
-This tool allows you to retrieve the current content of any of the 12 arc42 sections. Use this to review existing documentation or before making updates.
+This tool retrieves the current content of any of the 12 arc42 sections, plus metadata (file path, format, word count, last modified).
 
-You can optionally specify a targetFolder to read documentation from a specific directory instead of the default workspace.`;
+Use this tool:
+- BEFORE updating a section with update-section, to review and build upon existing content
+- Before appending ADRs to section 09_architecture_decisions, to determine the next ADR number
+- When reviewing existing documentation
+
+This tool is read-only. You can optionally specify a targetFolder to read documentation from a specific directory instead of the default workspace.`;
 
 /**
  * Find section file with any supported format extension
@@ -75,7 +80,7 @@ export async function getSectionHandler(
     if (!sectionFile) {
       return {
         success: false,
-        message: `Section file not found: ${section}. This section might not have been created yet. Expected ${section}.adoc or ${section}.md`
+        message: `Section file not found: ${section}. Expected ${section}.adoc or ${section}.md in ${sectionsDir}. Run arc42-status to see which sections exist, or create this section with update-section.`
       };
     }
 
@@ -101,7 +106,7 @@ export async function getSectionHandler(
     // Get localized metadata
     const localizedMetadata = templateProvider.getSectionMetadata(section as Arc42Section, language);
 
-    const wordCount = content.trim() ? content.split(/\s+/).length : 0;
+    const wordCount = countWords(content);
 
     return {
       success: true,

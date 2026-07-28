@@ -1,7 +1,7 @@
 ---
 name: arc42-docs
 description: Use this skill when the user asks to "create architecture documentation", "document the architecture", "arc42", "initialize arc42", "update architecture docs", discusses architecture documentation, or wants to document system design decisions, quality requirements, deployment views, building blocks, or any of the 12 arc42 sections. Also use when the user mentions ADRs (Architecture Decision Records) in the context of arc42.
-version: 2.0.0
+version: 2.1.0
 ---
 
 # Arc42 Architecture Documentation Skill
@@ -11,6 +11,8 @@ Guide for using the `arc42-mcp-server` MCP server to create and maintain archite
 ## Prerequisites
 
 The `arc42-mcp-server` MCP server must be configured and running. See [setup instructions](references/setup.md) for installation and configuration.
+
+**Compatibility:** This skill (v2.1.0) targets `@h2nguyen/arc42-node-mcp-server` **>= 2.3.0**. On older server versions the tools still work, but the `md`/`adoc` format aliases are only accepted by `arc42-init` — use the full codes `markdown`/`asciidoc` there.
 
 ---
 
@@ -59,11 +61,13 @@ Initialize the arc42 documentation workspace. Creates `arc42-docs/` directory wi
 
 **Returns:** Workspace root path, sections created count, config (including arc42 template reference version, date, and commit SHA).
 
+**Warning:** `force: true` overwrites ALL section files with fresh templates — existing content is lost. Confirm with the user and suggest backing up `arc42-docs/` first (see [Example 7](references/examples.md)).
+
 **Created structure:**
 
 ```
 <targetFolder>/arc42-docs/
-├── README.md
+├── README.adoc (or README.md)
 ├── arc42-documentation.adoc (or .md)
 ├── config.yaml
 ├── sections/
@@ -187,9 +191,14 @@ Start with the most impactful sections. You do NOT need to document all 12 secti
 Every tool response includes:
 
 - `success` — boolean indicating whether the operation succeeded
-- `message` — human-readable summary of what happened
+- `message` — human-readable summary of what happened; on failure it explains how to recover (e.g., "Run arc42-init first")
+
+Successful responses additionally include:
+
 - `data` — structured response data (varies by tool)
 - `nextSteps` — array of suggested follow-up actions; use these to guide the user on what to do next
+
+On failure, follow the recovery guidance in `message` instead of retrying the same call.
 
 ---
 
