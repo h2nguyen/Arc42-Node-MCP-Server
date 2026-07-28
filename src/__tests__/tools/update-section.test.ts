@@ -46,9 +46,16 @@ describe('update-section', () => {
 
     it('should have mode parameter with replace and append options', () => {
       expect(updateSectionInputSchema.mode).toBeDefined();
-      const modeOptions = updateSectionInputSchema.mode._def.innerType._def.values;
+      // Check the enum values - schema is ZodDefault<ZodOptional<ZodEnum>>
+      // Navigate through: default -> optional -> enum
+      const optionalType = updateSectionInputSchema.mode._def.innerType;
+      const modeOptions = optionalType._def.innerType._def.values;
       expect(modeOptions).toContain('replace');
       expect(modeOptions).toContain('append');
+    });
+
+    it('should declare replace as the default mode', () => {
+      expect(updateSectionInputSchema.mode._def.defaultValue()).toBe('replace');
     });
 
     it('should have optional targetFolder parameter', () => {
@@ -185,6 +192,19 @@ describe('update-section', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.wordCount).toBe(5);
+    });
+
+    it('should not count surrounding whitespace as words', async () => {
+      await mkdir(context.workspaceRoot, { recursive: true });
+      await mkdir(join(context.workspaceRoot, 'sections'), { recursive: true });
+
+      const result = await updateSectionHandler({
+        section: '05_building_block_view',
+        content: '  One two three\n' // 3 words with leading/trailing whitespace
+      }, context);
+
+      expect(result.success).toBe(true);
+      expect(result.data.wordCount).toBe(3);
     });
 
     it('should include nextSteps in response', async () => {

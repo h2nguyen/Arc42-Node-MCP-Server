@@ -9,27 +9,30 @@ import {
 import {
   SUPPORTED_OUTPUT_FORMAT_CODES,
   DEFAULT_OUTPUT_FORMAT,
-  type OutputFormatCode
+  FORMAT_INPUT_VALUES,
+  normalizeOutputFormatCode
 } from '../templates/formats/index.js';
 
 // Zod schema as the SINGLE SOURCE OF TRUTH for tool input
 const languageValues = SUPPORTED_LANGUAGE_CODES as unknown as [string, ...string[]];
 
-const formatValues = SUPPORTED_OUTPUT_FORMAT_CODES as unknown as [string, ...string[]];
+const formatValues = FORMAT_INPUT_VALUES as unknown as [string, ...string[]];
 
 export const arc42WorkflowGuideInputSchema = {
   language: z.enum(languageValues).optional().default('EN').describe('Language code for the workflow guide. Supported: EN, DE, ES, FR, IT, NL, PT, RU, CZ, UKR, ZH. Defaults to EN.'),
-  format: z.enum(formatValues).optional().describe('Output format for the workflow guide. Supported: markdown, asciidoc. Defaults to asciidoc.')
+  format: z.enum(formatValues).optional().default(DEFAULT_OUTPUT_FORMAT).describe(`Output format for the workflow guide. Supported: markdown (alias: md), asciidoc (alias: adoc). Defaults to ${DEFAULT_OUTPUT_FORMAT}.`)
 };
 
-export const arc42WorkflowGuideDescription = `Get a comprehensive guide for arc42 architecture documentation workflow.
+export const arc42WorkflowGuideDescription = `Get the comprehensive arc42 architecture documentation workflow guide.
 
-This tool provides detailed guidance on how to document software architecture using the arc42 template. It explains the 12 sections of arc42, recommended workflow, and best practices.
+Call this tool FIRST when starting a new architecture documentation effort. It explains the 12 arc42 sections and what belongs in each, the recommended documentation order, and best practices.
 
 Use this tool when:
-- Starting a new architecture documentation project
+- Starting a new architecture documentation project (before arc42-init)
 - Needing guidance on what to document in each section
-- Looking for best practices in architecture documentation`;
+- Looking for best practices in architecture documentation
+
+Do NOT use this tool for section-specific structure — use generate-template for that. This tool is read-only and does not create or modify any files.`;
 
 export async function arc42WorkflowGuideHandler(
   args: Record<string, unknown>,
@@ -49,11 +52,12 @@ export async function arc42WorkflowGuideHandler(
     };
   }
 
-  // Get format from args
-  const formatArg = (args.format as OutputFormatCode) ?? DEFAULT_OUTPUT_FORMAT;
+  // Get format from args, normalizing aliases (md -> markdown, adoc -> asciidoc)
+  const formatArg = (args.format as string) ?? DEFAULT_OUTPUT_FORMAT;
+  const format = normalizeOutputFormatCode(formatArg) ?? DEFAULT_OUTPUT_FORMAT;
 
   // Get the localized workflow guide in the specified format
-  const guide = getWorkflowGuideForFormat(language, formatArg);
+  const guide = getWorkflowGuideForFormat(language, format);
 
   // Get available languages for display
   const availableLanguages = getAvailableLanguages();
@@ -63,11 +67,11 @@ export async function arc42WorkflowGuideHandler(
 
   return {
     success: true,
-    message: `arc42 workflow guide loaded successfully (language: ${language}, format: ${formatArg})`,
+    message: `arc42 workflow guide loaded successfully (language: ${language}, format: ${format})`,
     data: {
       guide,
       language: currentLanguageInfo,
-      format: formatArg,
+      format,
       availableLanguages,
       supportedFormats: SUPPORTED_OUTPUT_FORMAT_CODES,
       defaultFormat: DEFAULT_OUTPUT_FORMAT,

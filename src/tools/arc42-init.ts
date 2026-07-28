@@ -9,6 +9,7 @@ import {
   normalizeLanguageCode,
   SUPPORTED_OUTPUT_FORMAT_CODES,
   DEFAULT_OUTPUT_FORMAT,
+  FORMAT_INPUT_VALUES,
   outputFormatFactory,
   type OutputFormatStrategy
 } from '../templates/index.js';
@@ -18,21 +19,23 @@ import { join } from 'path';
 
 // Zod schema as the SINGLE SOURCE OF TRUTH for tool input
 const languageValues = SUPPORTED_LANGUAGE_CODES as unknown as [string, ...string[]];
-const formatValues = ['markdown', 'asciidoc', 'md', 'adoc'] as const;
+const formatValues = FORMAT_INPUT_VALUES as unknown as [string, ...string[]];
 
 export const arc42InitInputSchema = {
   projectName: z.string().describe('Name of the project being documented'),
-  force: z.boolean().optional().describe('Force re-initialization even if workspace exists'),
+  force: z.boolean().optional().describe('Force re-initialization even if the workspace exists. WARNING: this overwrites ALL existing section files with fresh templates — existing content is lost. Confirm with the user first.'),
   targetFolder: z.string().optional().describe('Optional: Absolute path to the target folder where arc42-docs will be created. If not provided, uses the default workspace configured at server startup.'),
-  language: z.enum(languageValues).optional().default('EN').describe('Language code for the documentation templates. Supported: EN (English), DE (German), ES (Spanish), FR (French), IT (Italian), NL (Dutch), PT (Portuguese), RU (Russian), CZ (Czech), UKR (Ukrainian), ZH (Chinese). Defaults to EN.'),
-  format: z.enum(formatValues).optional().default(DEFAULT_OUTPUT_FORMAT).describe(`Output format for documentation files. Supported: markdown (md), asciidoc (adoc). Defaults to ${DEFAULT_OUTPUT_FORMAT}.`)
+  language: z.enum(languageValues).optional().default('EN').describe('Language code for the documentation templates. Supported: EN (English), DE (German), ES (Spanish), FR (French), IT (Italian), NL (Dutch), PT (Portuguese), RU (Russian), CZ (Czech), UKR (Ukrainian), ZH (Chinese). Defaults to EN. Persisted in config.yaml and applied to all later operations.'),
+  format: z.enum(formatValues).optional().default(DEFAULT_OUTPUT_FORMAT).describe(`Output format for documentation files. Supported: markdown (alias: md), asciidoc (alias: adoc). Defaults to ${DEFAULT_OUTPUT_FORMAT}. Persisted in config.yaml and applied to all later operations.`)
 };
 
-export const arc42InitDescription = `Initialize arc42 documentation workspace for a project.
+export const arc42InitDescription = `Initialize the arc42 documentation workspace for a project.
 
-This tool creates the complete directory structure and template files for arc42 architecture documentation. It sets up all 12 sections with templates, configuration files, and a main documentation file.
+This tool creates the arc42-docs/ directory with all 12 section template files, config.yaml (persisting the chosen language and format), a README, and a main documentation file.
 
-Use this tool once at the beginning of your architecture documentation journey.
+Run this ONCE at the beginning of a documentation effort, after reading arc42-workflow-guide. If the workspace may already exist, check with arc42-status first — use update-section to write content, NOT re-initialization.
+
+WARNING: force=true re-initializes an existing workspace and OVERWRITES all section files with fresh templates; existing content is lost. Only use force=true when the user explicitly wants to start over, and suggest backing up arc42-docs/ first.
 
 You can optionally specify:
 - targetFolder: Create documentation in a specific directory instead of the default workspace
@@ -95,7 +98,7 @@ export async function arc42InitHandler(
   if (existsSync(workspaceRoot) && !force) {
     return {
       success: false,
-      message: `Workspace already exists at ${workspaceRoot}. Use force=true to re-initialize.`
+      message: `Workspace already exists at ${workspaceRoot}. Check its state with arc42-status and write content with update-section. Only re-run with force=true if the user explicitly wants to start over — force OVERWRITES all section files and existing content is lost.`
     };
   }
 

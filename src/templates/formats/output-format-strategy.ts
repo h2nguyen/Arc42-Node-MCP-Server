@@ -58,6 +58,15 @@ export const OUTPUT_FORMAT_ALIASES: Record<string, OutputFormatCode> = {
 export const DEFAULT_OUTPUT_FORMAT: OutputFormatCode = 'asciidoc';
 
 /**
+ * Format values accepted by tool input schemas
+ *
+ * Canonical codes plus the short aliases (md, adoc) that are documented
+ * in the README and the arc42-docs skill. Handlers must normalize these
+ * via normalizeOutputFormatCode or the format factory before use.
+ */
+export const FORMAT_INPUT_VALUES = ['markdown', 'asciidoc', 'md', 'adoc'] as const;
+
+/**
  * Output Format Strategy Interface
  *
  * Defines the contract for all output format implementations.

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { ToolContext, ToolResponse, Arc42Section, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage } from '../types.js';
+import { ToolContext, ToolResponse, Arc42Section, ARC42_SECTIONS, SECTION_METADATA, resolveWorkspaceRoot, getErrorMessage, countWords } from '../types.js';
 import {
   type OutputFormatCode,
   DEFAULT_OUTPUT_FORMAT,
@@ -15,16 +15,22 @@ const sectionValues = ARC42_SECTIONS as unknown as [Arc42Section, ...Arc42Sectio
 
 export const updateSectionInputSchema = {
   section: z.enum(sectionValues).describe('The section to update (e.g., "01_introduction_and_goals")'),
-  content: z.string().describe('The content to write to the section'),
-  mode: z.enum(['replace', 'append']).optional().describe('Write mode: "replace" (default) or "append"'),
+  content: z.string().describe('The content to write to the section, in the workspace\'s configured format (asciidoc or markdown — check with arc42-status)'),
+  mode: z.enum(['replace', 'append']).optional().default('replace').describe('Write mode: "replace" OVERWRITES the entire section file; "append" adds the content after the existing content. Use "append" when adding ADRs (section 09) or other incremental entries so existing content is preserved. Defaults to "replace".'),
   targetFolder: z.string().optional().describe('Optional: Absolute path to the target folder containing arc42-docs. If not provided, uses the default workspace configured at server startup.')
 };
 
 export const updateSectionDescription = `Update content in a specific arc42 section.
 
-This tool allows you to add or update content in any of the 12 arc42 sections. The content will be written to the appropriate section file while preserving the overall structure.
+This tool writes content to any of the 12 arc42 section files. The file format (asciidoc or markdown) is automatically detected from existing files or config.yaml — write the content in that format.
 
-The file format is automatically detected from existing files or config.yaml.
+Write modes:
+- "replace" (default): OVERWRITES the entire section file with the new content
+- "append": adds the content after the existing content
+
+IMPORTANT: use mode "append" when adding ADRs to section 09_architecture_decisions or when adding incremental entries, so existing content is preserved. Call get-section first to review existing content (e.g., to determine the next ADR number).
+
+Recommended flow: generate-template (structure) -> get-section (existing content) -> update-section.
 
 You can optionally specify a targetFolder to update documentation in a specific directory instead of the default workspace.`;
 
@@ -129,7 +135,7 @@ export async function updateSectionHandler(
 
     await writeFile(sectionFile.path, finalContent);
 
-    const wordCount = finalContent.split(/\s+/).length;
+    const wordCount = countWords(finalContent);
 
     return {
       success: true,

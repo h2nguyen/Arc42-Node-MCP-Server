@@ -464,7 +464,7 @@ Update content in a specific arc42 section.
 update-section {
   section: "01_introduction_and_goals",
   content: "= Your AsciiDoc or Markdown content here",
-  mode?: "replace" | "append",
+  mode?: "replace" | "append",       // Optional: write mode (default: replace); use "append" for ADRs
   targetFolder?: "/path/to/project"  // Optional: specify target directory
 }
 // Note: Automatically detects format from existing file extension
@@ -668,28 +668,28 @@ AI runs: update-section {
 
 ## 🏗️ Project Structure
 
-After initialization, your project will have:
+After initialization, your project will have (`.adoc` with the default AsciiDoc format, `.md` with `format: "markdown"`):
 
 ```
 your-project/
 └── arc42-docs/
-    ├── README.md                    # Getting started guide
-    ├── arc42-documentation.md        # Main combined document
+    ├── README.adoc                  # Getting started guide
+    ├── arc42-documentation.adoc     # Main combined document
     ├── config.yaml                  # Configuration
     ├── images/                      # Diagrams and images
     └── sections/                    # Individual section files
-        ├── 01_introduction_and_goals.md
-        ├── 02_architecture_constraints.md
-        ├── 03_context_and_scope.md
-        ├── 04_solution_strategy.md
-        ├── 05_building_block_view.md
-        ├── 06_runtime_view.md
-        ├── 07_deployment_view.md
-        ├── 08_concepts.md
-        ├── 09_architecture_decisions.md
-        ├── 10_quality_requirements.md
-        ├── 11_technical_risks.md
-        └── 12_glossary.md
+        ├── 01_introduction_and_goals.adoc
+        ├── 02_architecture_constraints.adoc
+        ├── 03_context_and_scope.adoc
+        ├── 04_solution_strategy.adoc
+        ├── 05_building_block_view.adoc
+        ├── 06_runtime_view.adoc
+        ├── 07_deployment_view.adoc
+        ├── 08_concepts.adoc
+        ├── 09_architecture_decisions.adoc
+        ├── 10_quality_requirements.adoc
+        ├── 11_technical_risks.adoc
+        └── 12_glossary.adoc
 ```
 
 ## 🎯 Best Practices

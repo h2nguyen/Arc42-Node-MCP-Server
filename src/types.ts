@@ -2,6 +2,8 @@
  * Core types for arc42 MCP server
  */
 
+import { join } from 'path';
+
 // Re-export output format types for convenience
 export type {
   OutputFormatStrategy,
@@ -197,7 +199,7 @@ export function resolveWorkspaceRoot(context: ToolContext, targetFolder?: string
   if (targetFolder) {
     return {
       projectPath: targetFolder,
-      workspaceRoot: `${targetFolder}/arc42-docs`
+      workspaceRoot: join(targetFolder, 'arc42-docs')
     };
   }
   return {
@@ -213,4 +215,11 @@ export function getErrorMessage(error: unknown): string {
     return error.message;
   }
   return String(error);
+}
+
+// Helper function to count words consistently across tools
+// (a naive split on whitespace counts empty/padded strings incorrectly)
+export function countWords(text: string): number {
+  const trimmed = text.trim();
+  return trimmed ? trimmed.split(/\s+/).length : 0;
 }
