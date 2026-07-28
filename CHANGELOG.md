@@ -5,6 +5,28 @@ All notable changes to the arc42 MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.0] - 2026-07-28
+
+### Added
+- **Format aliases everywhere**: `arc42-workflow-guide` and `generate-template` now accept the `md`/`adoc` format aliases (previously only `arc42-init` did), backed by a shared `FORMAT_INPUT_VALUES` constant with handler-side normalization — the skill and README alias claims now hold for every format parameter
+- **Schema-declared defaults**: MCP clients now see `mode: "replace"` (update-section) and `format: "asciidoc"` (arc42-workflow-guide) as defaults in the tool JSON schema instead of having to guess
+- **MCP protocol contract test**: New integration suite (`src/__tests__/integration/mcp-protocol-contract.test.ts`, 16 tests) spawns the built server over stdio JSON-RPC and verifies the skill-documented workflows end-to-end (tools/list schema contract, "Starting Fresh" flow with `targetFolder`, ADR append flow, actionable error paths); auto-skips when `dist/` is not built
+
+### Changed
+- **LLM-optimized tool descriptions**: All 6 tool descriptions rewritten for reliable AI tool selection — when to use / when not to, workflow ordering, read-only markers, and explicit warnings for destructive operations (`arc42-init` with `force: true`, `update-section` in `replace` mode)
+- **Agent-actionable error messages**: Errors now include concrete recovery steps (e.g., re-init without force points to `arc42-status` and warns that force overwrites; missing section files name both expected filenames and suggest next tools)
+- **Single tool registry**: Tool registration refactored into a `TOOL_REGISTRY` in `src/tools/index.ts` used by both the MCP server registration and `handleToolCall` — adding a tool now requires exactly one new entry
+- **Claude skill v2.1.0** (`.claude/skills/arc42-docs-mcp/`): pins the compatible server version (>= 2.3.0), corrects the error-response contract (`data`/`nextSteps` are success-only), and adds the force-overwrite warning
+
+### Fixed
+- Word counting no longer miscounts empty or whitespace-padded content (shared `countWords()` helper used by `update-section`, `get-section`, and `arc42-status`)
+- Floating-point error in the completeness heuristic (e.g., 57 words previously reported as 56%)
+- `resolveWorkspaceRoot` now uses `path.join()` instead of string concatenation
+- Structure trees in README and SKILL.md showed `README.md`/`.md` section files for the default AsciiDoc format (actual output is `README.adoc`/`.adoc`)
+
+### Documentation
+- README: corrected post-init project structure tree and documented the `update-section` mode default
+
 ## [2.2.1] - 2026-03-09
 
 ### Changed
