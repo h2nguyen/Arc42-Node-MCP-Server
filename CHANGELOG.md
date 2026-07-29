@@ -5,6 +5,16 @@ All notable changes to the arc42 MCP Server will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.3.1] - 2026-07-29
+
+### Security
+- Bumped the `npm_and_yarn` group (10 updates): `vitest` 4.0.18 → 4.1.10, `vite` 7.3.3 → 8.1.5, `hono` 4.12.18 → 4.12.32, `@hono/node-server` 1.19.14 → 2.0.12, `body-parser` 2.2.2 → 2.3.0, `qs` 6.14.2 → 6.15.3, `postcss` 8.5.14 → 8.5.24, `esbuild` 0.27.3 → 0.27.7, `brace-expansion` 5.0.3 → 5.0.8, `fast-uri` 3.1.2 → 3.1.4
+- Resolved the remaining advisories in the transitive tree: `js-yaml` 3.14.2 → 3.15.0 (GHSA-h67p-54hq-rp68 / GHSA-52cp-r559-cp3m — quadratic-complexity DoS via YAML merge keys, high) and `@hono/node-server` (GHSA-frvp-7c67-39w9 — `serve-static` path traversal on Windows via encoded backslash, moderate)
+
+### Notes
+- No source or API changes — lockfile-only patch release; all 1308 tests pass unchanged
+- One low-severity advisory remains unfixable without a breaking upgrade: `esbuild` < 0.28.1 (GHSA-g7r4-m6w7-qqqr), a dev-only dependency of `tsx`/`vite` that affects only the esbuild dev server on Windows and is never used at runtime by this server
+
 ## [2.3.0] - 2026-07-28
 
 ### Added
